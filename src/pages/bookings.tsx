@@ -63,9 +63,38 @@ const filteredAndSortedBookings = useMemo(() => {
       const aValue = a[sortKey as keyof Booking];
       const bValue = b[sortKey as keyof Booking];
       
-      if (aValue < bValue) return sortDirection === 'asc' ? -1 : 1;
-      if (aValue > bValue) return sortDirection === 'asc' ? 1 : -1;
-      return 0;
+      // Handle null/undefined values
+      if (aValue === null || aValue === undefined) return sortDirection === 'asc' ? 1 : -1;
+      if (bValue === null || bValue === undefined) return sortDirection === 'asc' ? -1 : 1;
+      
+      // Handle different types of values
+      if (typeof aValue === 'string' && typeof bValue === 'string') {
+        return sortDirection === 'asc' 
+          ? aValue.localeCompare(bValue)
+          : bValue.localeCompare(aValue);
+      }
+      
+      if (typeof aValue === 'number' && typeof bValue === 'number') {
+        return sortDirection === 'asc' 
+          ? aValue - bValue
+          : bValue - aValue;
+      }
+      
+      // For dates (assuming ISO strings for dates)
+      if (sortKey === 'checkInDate' || sortKey === 'checkOutDate' || sortKey === 'createdDate') {
+        const dateA = new Date(String(aValue)).getTime();
+        const dateB = new Date(String(bValue)).getTime();
+        return sortDirection === 'asc'
+          ? dateA - dateB
+          : dateB - dateA;
+      }
+      
+      // Fallback for other types
+      const compareA = String(aValue);
+      const compareB = String(bValue);
+      return sortDirection === 'asc'
+        ? compareA.localeCompare(compareB)
+        : compareB.localeCompare(compareA);
     });
   }
   

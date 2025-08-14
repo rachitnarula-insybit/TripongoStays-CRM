@@ -91,9 +91,45 @@ const UsersPage: React.FC = () => {
         const aValue = a[sortKey as keyof User];
         const bValue = b[sortKey as keyof User];
         
-        if (aValue < bValue) return sortDirection === 'asc' ? -1 : 1;
-        if (aValue > bValue) return sortDirection === 'asc' ? 1 : -1;
-        return 0;
+        // Handle null/undefined values
+        if (aValue === null || aValue === undefined) return sortDirection === 'asc' ? 1 : -1;
+        if (bValue === null || bValue === undefined) return sortDirection === 'asc' ? -1 : 1;
+        
+        // Handle different types of values
+        if (typeof aValue === 'string' && typeof bValue === 'string') {
+          return sortDirection === 'asc' 
+            ? aValue.localeCompare(bValue)
+            : bValue.localeCompare(aValue);
+        }
+        
+        if (typeof aValue === 'number' && typeof bValue === 'number') {
+          return sortDirection === 'asc' 
+            ? aValue - bValue
+            : bValue - aValue;
+        }
+        
+        // Handle boolean values
+        if (typeof aValue === 'boolean' && typeof bValue === 'boolean') {
+          return sortDirection === 'asc'
+            ? Number(aValue) - Number(bValue)
+            : Number(bValue) - Number(aValue);
+        }
+        
+        // For dates (assuming ISO strings for dates)
+        if (sortKey === 'joinedDate') {
+          const dateA = new Date(String(aValue)).getTime();
+          const dateB = new Date(String(bValue)).getTime();
+          return sortDirection === 'asc'
+            ? dateA - dateB
+            : dateB - dateA;
+        }
+        
+        // Fallback for other types
+        const compareA = String(aValue);
+        const compareB = String(bValue);
+        return sortDirection === 'asc'
+          ? compareA.localeCompare(compareB)
+          : compareB.localeCompare(compareA);
       });
     }
     
