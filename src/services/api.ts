@@ -1,5 +1,6 @@
 import { 
   User, 
+  CreateUserData,
   Lead, 
   CallRecord, 
   Booking, 
@@ -24,7 +25,7 @@ import {
 } from '@/data/mockData';
 
 // Transform backend data to match frontend format
-function transformBackendData(data: any, endpoint: string): any {
+function transformBackendData(data: unknown, endpoint: string): unknown {
   if (!data) return data;
 
   const baseEndpoint = endpoint.split('?')[0];
@@ -32,18 +33,18 @@ function transformBackendData(data: any, endpoint: string): any {
   // Transform user data
   if (baseEndpoint.includes('/user/')) {
     if (Array.isArray(data)) {
-      return data.map(transformUserData);
+      return data.map(item => transformUserData(item as Record<string, unknown>));
     } else {
-      return transformUserData(data);
+      return transformUserData(data as Record<string, unknown>);
     }
   }
   
   // Transform booking data
   if (baseEndpoint.includes('/booking/')) {
     if (Array.isArray(data)) {
-      return data.map(transformBookingData);
+      return data.map(item => transformBookingData(item as Record<string, unknown>));
     } else {
-      return transformBookingData(data);
+      return transformBookingData(data as Record<string, unknown>);
     }
   }
   
@@ -52,39 +53,43 @@ function transformBackendData(data: any, endpoint: string): any {
 }
 
 // Transform individual booking object
-function transformBookingData(backendBooking: any): Booking {
+function transformBookingData(backendBooking: Record<string, unknown>): Booking {
+  const user = (backendBooking.user as Record<string, unknown>) || {};
+  const property = (backendBooking.property as Record<string, unknown>) || {};
+  
   return {
-    id: backendBooking._id,
-    bookingReference: backendBooking.bookingReference || `TGS${backendBooking._id.slice(-6)}`,
-    guestName: backendBooking.guestName || backendBooking.user?.fullname || '',
-    guestEmail: backendBooking.guestEmail || backendBooking.user?.email || '',
-    guestPhone: backendBooking.guestPhone || '',
-    propertyName: backendBooking.property?.name || backendBooking.propertyName || '',
-    propertyId: backendBooking.property?._id || backendBooking.propertyId || '',
-    checkInDate: backendBooking.checkInDate || '',
-    checkOutDate: backendBooking.checkOutDate || '',
-    nights: backendBooking.nights || 1,
-    guests: backendBooking.guests || 1,
-    baseAmount: backendBooking.baseAmount || backendBooking.amount || 0,
-    taxAmount: backendBooking.taxAmount || 0,
-    totalAmount: backendBooking.totalAmount || backendBooking.amount || 0,
-    status: backendBooking.status || 'Pending',
-    paymentStatus: backendBooking.paymentStatus || backendBooking.payment || 'Pending',
-    createdDate: backendBooking.createdAt || backendBooking.createdDate || new Date().toISOString(),
-    source: backendBooking.source || 'Website',
+    id: String(backendBooking._id || ''),
+    bookingReference: String(backendBooking.bookingReference || `TGS${String(backendBooking._id || '').slice(-6)}`),
+    guestName: String(backendBooking.guestName || user.fullname || ''),
+    guestEmail: String(backendBooking.guestEmail || user.email || ''),
+    guestPhone: String(backendBooking.guestPhone || ''),
+    propertyName: String(property.name || backendBooking.propertyName || ''),
+    propertyId: String(property._id || backendBooking.propertyId || ''),
+    checkInDate: String(backendBooking.checkInDate || ''),
+    checkOutDate: String(backendBooking.checkOutDate || ''),
+    nights: Number(backendBooking.nights || 1),
+    guests: Number(backendBooking.guests || 1),
+    baseAmount: Number(backendBooking.baseAmount || backendBooking.amount || 0),
+    taxAmount: Number(backendBooking.taxAmount || 0),
+    totalAmount: Number(backendBooking.totalAmount || backendBooking.amount || 0),
+    status: String(backendBooking.status || 'Pending') as Booking['status'],
+    paymentStatus: String(backendBooking.paymentStatus || backendBooking.payment || 'Pending') as Booking['paymentStatus'],
+    createdDate: String(backendBooking.createdAt || backendBooking.createdDate || new Date().toISOString()),
+    source: String(backendBooking.source || 'Website'),
   };
 }
 
-// Transform individual user object
-function transformUserData(backendUser: any): User {
+// Transform individual user object  
+function transformUserData(backendUser: Record<string, unknown>): User {
+  const role = String(backendUser.Role || '');
   return {
-    id: backendUser._id,
-    name: backendUser.fullName || backendUser.fullname || '',
-    email: backendUser.email || '',
-    phone: backendUser.phoneNumber || backendUser.mobile || '',
-    role: backendUser.Role === 'admin' ? 'admin' : backendUser.Role === 'user' ? 'agent' : 'agent',
-    joinedDate: backendUser.createdAt,
-    avatar: backendUser.avatar,
+    id: String(backendUser._id || ''),
+    name: String(backendUser.fullName || backendUser.fullname || ''),
+    email: String(backendUser.email || ''),
+    phone: String(backendUser.phoneNumber || backendUser.mobile || ''),
+    role: (role === 'admin' ? 'admin' : role === 'manager' ? 'manager' : 'agent') as User['role'],
+    joinedDate: String(backendUser.createdAt || new Date().toISOString()),
+    avatar: String(backendUser.avatar || ''),
     isActive: true, // Default to true since backend doesn't have this field
   };
 }
@@ -131,7 +136,7 @@ async function apiCall<T>(
     console.log('🔥 Transformed Data:', transformedData);
     
     return {
-      data: transformedData,
+      data: transformedData as T,
       success: backendResponse.success,
       message: backendResponse.message,
       pagination: backendResponse.pagination,
@@ -140,20 +145,19 @@ async function apiCall<T>(
     console.error('🔥 API call failed:', error);
     console.log('🔥 Falling back to mock data');
     // Fallback to mock data
-    return await mockApiCall<T>(endpoint, options);
+    return await mockApiCall<T>(endpoint);
   }
 }
 
 // Fallback to mock data
 async function mockApiCall<T>(
-  endpoint: string, 
-  options: RequestInit = {}
+  endpoint: string
 ): Promise<ApiResponse<T>> {
   const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
   await delay(500);
   
   // Map endpoints to mock data
-  const mockDataMap: Record<string, any> = {
+  const mockDataMap: Record<string, unknown> = {
     '/user/login': { user: mockUsers[0], token: 'mock-token' },
     '/user/getuserbyid': mockUsers[0],
     '/user/getuser': mockUsers,
@@ -176,8 +180,6 @@ async function mockApiCall<T>(
     '/dashboard/city-demand': mockCityDemandData,
   };
 
-// Check if this endpoint expects pagination
-const paginatedEndpoints = ['/user/getuser', '/user/getusers', '/booking/getallbooking', '/enquiry/getenquiries'];
   const baseEndpoint = endpoint.split('?')[0];
   const data = mockDataMap[baseEndpoint];
   
@@ -197,7 +199,7 @@ const paginatedEndpoints = ['/user/getuser', '/user/getusers', '/booking/getallb
       const paginatedData = Array.isArray(data) ? data.slice(startIndex, endIndex) : data;
       
       return {
-        data: paginatedData,
+        data: paginatedData as T,
         success: true,
         pagination: Array.isArray(data) ? {
           page,
@@ -209,7 +211,7 @@ const paginatedEndpoints = ['/user/getuser', '/user/getusers', '/booking/getallb
     }
     
     return {
-      data,
+      data: data as T,
       success: true,
     };
   }
@@ -333,7 +335,7 @@ export const usersApi = {
     return apiCall<User>(`/user/getuserbyid/${id}`);
   },
 
-  createUser: async (userData: Omit<User, 'id' | 'joinedDate'>): Promise<ApiResponse<User>> => {
+  createUser: async (userData: CreateUserData): Promise<ApiResponse<User>> => {
     return apiCall<User>('/user/registeruser', {
       method: 'POST',
       body: JSON.stringify(userData),
@@ -567,7 +569,7 @@ export const bookingsApi = {
     });
   },
 
-  createManualBooking: async (bookingData: any): Promise<ApiResponse<Booking>> => {
+  createManualBooking: async (bookingData: Partial<Booking>): Promise<ApiResponse<Booking>> => {
     return apiCall<Booking>('/booking/admin/manual-booking', {
       method: 'POST',
       body: JSON.stringify(bookingData),

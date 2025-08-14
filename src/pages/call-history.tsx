@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { useQuery, useMutation } from '@tanstack/react-query';
-import { Search, Download, Filter, X, Calendar } from 'lucide-react';
+import { Search, Download, Filter, X } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { callHistoryApi } from '@/services/api';
 import Button from '@/components/ui/Button';
@@ -55,11 +55,11 @@ const CallHistoryPage: React.FC = () => {
     },
   });
 
-  const callRecords = callHistoryResponse?.data || [];
   const pagination = callHistoryResponse?.pagination;
 
   // Filter and sort call records
   const filteredAndSortedRecords = useMemo(() => {
+    const callRecords = callHistoryResponse?.data || [];
     let result = filterBySearch(callRecords, searchTerm, ['userName', 'phoneNumber', 'type', 'status', 'result']);
     
     if (sortKey) {
@@ -108,7 +108,7 @@ const CallHistoryPage: React.FC = () => {
 
     
     return result;
-  }, [callRecords, searchTerm, sortKey, sortDirection]);
+  }, [callHistoryResponse?.data, searchTerm, sortKey, sortDirection]);
 
   const debouncedSearch = debounce((value: string) => {
     setSearchTerm(value);
@@ -166,10 +166,10 @@ const CallHistoryPage: React.FC = () => {
       render: (value) => (
         <div>
           <div className="font-medium text-neutral-black">
-            {formatDate(value)}
+            {formatDate(String(value || ''))}
           </div>
           <div className="text-sm text-neutral-gray">
-            {formatDateTime(value).split(' ')[1]}
+            {formatDateTime(String(value || '')).split(' ')[1]}
           </div>
         </div>
       ),
@@ -191,10 +191,10 @@ const CallHistoryPage: React.FC = () => {
       sortable: true,
       render: (value) => (
         <Badge 
-          variant={value === 'Incoming' ? 'info' : 'success'}
+          variant={String(value) === 'Incoming' ? 'info' : 'success'}
           size="sm"
         >
-          {value}
+          {String(value)}
         </Badge>
       ),
     },
@@ -203,8 +203,8 @@ const CallHistoryPage: React.FC = () => {
       label: 'Status',
       sortable: true,
       render: (value) => (
-        <Badge className={getStatusColor(value)} size="sm">
-          {value}
+        <Badge className={getStatusColor(String(value))} size="sm">
+          {String(value)}
         </Badge>
       ),
     },
@@ -214,7 +214,7 @@ const CallHistoryPage: React.FC = () => {
       sortable: true,
       render: (value) => (
         <span className="font-mono text-sm">
-          {formatDuration(value)}
+          {formatDuration(Number(value))}
         </span>
       ),
     },
@@ -233,9 +233,10 @@ const CallHistoryPage: React.FC = () => {
           }
         };
 
+        const stringValue = String(value);
         return (
-          <Badge className={getResultColor(value)} size="sm">
-            {value}
+          <Badge className={getResultColor(stringValue)} size="sm">
+            {stringValue}
           </Badge>
         );
       },
@@ -245,7 +246,7 @@ const CallHistoryPage: React.FC = () => {
       label: 'Notes',
       render: (value) => (
         <span className="text-sm text-neutral-gray max-w-xs truncate">
-          {value || '-'}
+          {String(value) || '-'}
         </span>
       ),
     },

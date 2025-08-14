@@ -34,7 +34,7 @@ export const generateInvoice = (booking: Booking): void => {
   pdf.setFontSize(10);
   pdf.setFont('helvetica', 'normal');
   pdf.text(`Invoice #: ${booking.bookingReference}`, 150, 32);
-  pdf.text(`Date: ${formatDate(booking.createdDate)}`, 150, 37);
+  pdf.text(`Date: ${formatDate(String(booking.createdDate))}`, 150, 37);
   
   // Company details
   let yPos = 55;
@@ -79,8 +79,8 @@ export const generateInvoice = (booking: Booking): void => {
   
   const bookingDetails = [
     ['Property:', booking.propertyName],
-    ['Check-in Date:', formatDate(booking.checkInDate)],
-    ['Check-out Date:', formatDate(booking.checkOutDate)],
+    ['Check-in Date:', formatDate(String(booking.checkInDate))],
+    ['Check-out Date:', formatDate(String(booking.checkOutDate))],
     ['Number of Nights:', booking.nights.toString()],
     ['Number of Guests:', booking.guests.toString()],
     ['Booking Status:', booking.status],

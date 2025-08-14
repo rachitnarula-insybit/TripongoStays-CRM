@@ -41,12 +41,12 @@ const BookingsPage: React.FC = () => {
     queryFn: () => bookingsApi.getBookings(currentPage, limit, filters),
   });
 
-  const bookings = bookingsResponse?.data || [];
   const pagination = bookingsResponse?.pagination;
 
   // Filter and sort bookings
 const filteredAndSortedBookings = useMemo(() => {
   // Ensure bookings is an array
+  const bookings = bookingsResponse?.data || [];
   const bookingsArray = Array.isArray(bookings) ? bookings : [];
   
   let result = filterBySearch(bookingsArray, searchTerm, [
@@ -99,7 +99,7 @@ const filteredAndSortedBookings = useMemo(() => {
   }
   
   return result;
-}, [bookings, searchTerm, sortKey, sortDirection]);
+}, [bookingsResponse?.data, searchTerm, sortKey, sortDirection]);
 
   const debouncedSearch = debounce((value: string) => {
     setSearchTerm(value);
@@ -158,7 +158,7 @@ const filteredAndSortedBookings = useMemo(() => {
       sortable: true,
       render: (value) => (
         <span className="font-mono text-sm font-medium text-primary-orange">
-          {value}
+          {String(value)}
         </span>
       ),
     },
@@ -194,10 +194,10 @@ const filteredAndSortedBookings = useMemo(() => {
       render: (value, booking) => (
         <div>
           <div className="text-sm">
-            <strong>Check-in:</strong> {formatDate(value)}
+            <strong>Check-in:</strong> {formatDate(String(value))}
           </div>
           <div className="text-sm">
-            <strong>Check-out:</strong> {formatDate(booking.checkOutDate)}
+            <strong>Check-out:</strong> {formatDate(String(booking.checkOutDate))}
           </div>
         </div>
       ),
@@ -208,7 +208,7 @@ const filteredAndSortedBookings = useMemo(() => {
       sortable: true,
       render: (value) => (
         <span className="font-medium text-secondary-green">
-          {formatCurrency(value)}
+          {formatCurrency(Number(value))}
         </span>
       ),
     },
@@ -217,8 +217,8 @@ const filteredAndSortedBookings = useMemo(() => {
       label: 'Status',
       sortable: true,
       render: (value) => (
-        <Badge className={getStatusColor(value)} size="sm">
-          {value}
+        <Badge className={getStatusColor(String(value))} size="sm">
+          {String(value)}
         </Badge>
       ),
     },
@@ -227,8 +227,8 @@ const filteredAndSortedBookings = useMemo(() => {
       label: 'Payment',
       sortable: true,
       render: (value) => (
-        <Badge className={getStatusColor(value)} size="sm">
-          {value}
+        <Badge className={getStatusColor(String(value))} size="sm">
+          {String(value)}
         </Badge>
       ),
     },
@@ -441,11 +441,11 @@ const filteredAndSortedBookings = useMemo(() => {
                 </div>
                 <div>
                   <label className="text-sm font-medium text-neutral-gray">Check-in Date</label>
-                  <p className="text-neutral-black">{formatDate(selectedBooking.checkInDate)}</p>
+                  <p className="text-neutral-black">{formatDate(String(selectedBooking.checkInDate))}</p>
                 </div>
                 <div>
                   <label className="text-sm font-medium text-neutral-gray">Check-out Date</label>
-                  <p className="text-neutral-black">{formatDate(selectedBooking.checkOutDate)}</p>
+                  <p className="text-neutral-black">{formatDate(String(selectedBooking.checkOutDate))}</p>
                 </div>
                 <div>
                   <label className="text-sm font-medium text-neutral-gray">Nights</label>

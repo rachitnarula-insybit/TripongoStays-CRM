@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Search, Phone, MessageCircle, UserCheck, ChevronDown } from 'lucide-react';
+import { Search, Phone, MessageCircle, ChevronDown } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { leadsApi } from '@/services/api';
 import Button from '@/components/ui/Button';
@@ -73,11 +73,11 @@ const LeadsPage: React.FC = () => {
     },
   });
 
-  const leads = leadsResponse?.data || [];
   const pagination = leadsResponse?.pagination;
 
   // Filter and sort leads
   const filteredAndSortedLeads = useMemo(() => {
+    const leads = leadsResponse?.data || [];
     let result = filterBySearch(leads, searchTerm, ['name', 'email', 'phone', 'source', 'status']);
     
     if (sortKey) {
@@ -121,7 +121,7 @@ const LeadsPage: React.FC = () => {
     }
     
     return result;
-  }, [leads, searchTerm, sortKey, sortDirection]);
+  }, [leadsResponse?.data, searchTerm, sortKey, sortDirection]);
 
   const debouncedSearch = debounce((value: string) => {
     setSearchTerm(value);
@@ -274,7 +274,7 @@ const LeadsPage: React.FC = () => {
       sortable: true,
       render: (value) => (
         <Badge variant="info" size="sm">
-          {value}
+          {String(value)}
         </Badge>
       ),
     },
@@ -288,8 +288,8 @@ const LeadsPage: React.FC = () => {
       label: 'Priority',
       sortable: true,
       render: (value) => (
-        <Badge className={getPriorityColor(value)} size="sm">
-          {value}
+        <Badge className={getPriorityColor(String(value))} size="sm">
+          {String(value)}
         </Badge>
       ),
     },
@@ -302,13 +302,13 @@ const LeadsPage: React.FC = () => {
       key: 'expectedRevenue',
       label: 'Expected Revenue',
       sortable: true,
-      render: (value) => value ? formatCurrency(value) : '-',
+      render: (value) => value ? formatCurrency(Number(value)) : '-',
     },
     {
       key: 'createdDate',
       label: 'Created Date',
       sortable: true,
-      render: (value) => formatDate(value),
+      render: (value) => formatDate(String(value)),
     },
     {
       key: 'actions',

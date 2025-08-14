@@ -10,6 +10,8 @@ export interface User {
   isActive: boolean;
 }
 
+export type CreateUserData = Omit<User, 'id' | 'joinedDate'>;
+
 export interface AuthState {
   user: User | null;
   isAuthenticated: boolean;
@@ -160,7 +162,7 @@ export interface TableColumn<T> {
   key: keyof T | string;
   label: string;
   sortable?: boolean;
-  render?: (value: any, row: T) => React.ReactNode;
+  render?: (value: T[keyof T], row: T) => React.ReactNode;
 }
 
 export interface PaginationProps {

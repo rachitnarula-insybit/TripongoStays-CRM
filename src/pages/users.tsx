@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Search, Plus, Edit, Trash2, UserPlus } from 'lucide-react';
+import { Search, Edit, Trash2, UserPlus } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { usersApi } from '@/services/api';
 import Button from '@/components/ui/Button';
@@ -10,7 +10,7 @@ import Pagination from '@/components/ui/Pagination';
 import Badge from '@/components/ui/Badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import UserModal from '@/components/users/UserModal';
-import { User, TableColumn } from '@/types';
+import { User, CreateUserData, TableColumn } from '@/types';
 import { formatDate, debounce, filterBySearch } from '@/utils';
 
 const UsersPage: React.FC = () => {
@@ -79,11 +79,11 @@ const UsersPage: React.FC = () => {
     },
   });
 
-  const users = usersResponse?.data || [];
   const pagination = usersResponse?.pagination;
 
   // Filter and sort users
   const filteredAndSortedUsers = useMemo(() => {
+    const users = usersResponse?.data || [];
     let result = filterBySearch(users, searchTerm, ['name', 'email', 'phone', 'role']);
     
     if (sortKey) {
@@ -134,7 +134,7 @@ const UsersPage: React.FC = () => {
     }
     
     return result;
-  }, [users, searchTerm, sortKey, sortDirection]);
+  }, [usersResponse?.data, searchTerm, sortKey, sortDirection]);
 
   const debouncedSearch = debounce((value: string) => {
     setSearchTerm(value);
@@ -166,14 +166,14 @@ const UsersPage: React.FC = () => {
     }
   };
 
-  const handleModalSubmit = async (data: any) => {
+  const handleModalSubmit = async (data: CreateUserData | Partial<User>) => {
     if (selectedUser) {
       await updateUserMutation.mutateAsync({
         id: selectedUser.id,
-        data,
+        data: data as Partial<User>,
       });
     } else {
-      await createUserMutation.mutateAsync(data);
+      await createUserMutation.mutateAsync(data as CreateUserData);
     }
   };
 
@@ -207,10 +207,10 @@ const UsersPage: React.FC = () => {
       sortable: true,
       render: (value) => (
         <Badge
-          variant={value === 'admin' ? 'error' : value === 'manager' ? 'warning' : 'info'}
+          variant={String(value) === 'admin' ? 'error' : String(value) === 'manager' ? 'warning' : 'info'}
           className="capitalize"
         >
-          {value}
+          {String(value)}
         </Badge>
       ),
     },
@@ -218,14 +218,14 @@ const UsersPage: React.FC = () => {
       key: 'joinedDate',
       label: 'Joined Date',
       sortable: true,
-      render: (value) => formatDate(value),
+      render: (value) => formatDate(String(value)),
     },
     {
       key: 'isActive',
       label: 'Status',
       render: (value) => (
-        <Badge variant={value ? 'success' : 'error'}>
-          {value ? 'Active' : 'Inactive'}
+        <Badge variant={Boolean(value) ? 'success' : 'error'}>
+          {Boolean(value) ? 'Active' : 'Inactive'}
         </Badge>
       ),
     },

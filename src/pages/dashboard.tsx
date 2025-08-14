@@ -62,7 +62,7 @@ const DashboardPage: React.FC = () => {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-neutral-black">Dashboard</h1>
-          <p className="text-neutral-gray">Welcome back! Here's what's happening with your business.</p>
+          <p className="text-neutral-gray">Welcome back! Here&apos;s what&apos;s happening with your business.</p>
         </div>
         <Button
           variant="outline"

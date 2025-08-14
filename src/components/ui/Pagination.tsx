@@ -15,7 +15,6 @@ const Pagination: React.FC<PaginationProps> = ({
   currentPage,
   totalPages,
   onPageChange,
-  showFirstLast = true,
   className,
 }) => {
   if (totalPages <= 1) return null;

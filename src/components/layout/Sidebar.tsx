@@ -11,7 +11,6 @@ import {
   Calendar,
   Package,
   LogOut,
-  Menu,
   X,
 } from 'lucide-react';
 import { cn } from '@/utils';

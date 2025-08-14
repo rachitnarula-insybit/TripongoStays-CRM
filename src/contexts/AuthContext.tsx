@@ -2,7 +2,6 @@
 
 import React, { createContext, useContext, useReducer, useEffect } from 'react';
 import { User, AuthState } from '@/types';
-import { mockUsers, mockCredentials } from '@/data/mockData';
 import { storage } from '@/utils';
 import { authApi } from '@/services/api';
 

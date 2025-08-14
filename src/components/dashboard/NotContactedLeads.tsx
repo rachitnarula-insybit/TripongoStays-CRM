@@ -138,7 +138,7 @@ const NotContactedLeads: React.FC<NotContactedLeadsProps> = ({ leads, isLoading 
                     </Badge>
                   </div>
                   <span className="text-xs text-neutral-gray">
-                    Created {formatDate(lead.createdDate)}
+                    Created {formatDate(String(lead.createdDate))}
                   </span>
                 </div>
                 

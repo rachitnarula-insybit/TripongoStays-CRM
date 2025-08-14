@@ -14,7 +14,7 @@ interface TableProps<T> {
   className?: string;
 }
 
-function Table<T extends Record<string, any>>({
+function Table<T>({
   data,
   columns,
   onSort,

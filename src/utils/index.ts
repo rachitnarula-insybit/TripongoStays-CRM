@@ -103,6 +103,7 @@ export function calculatePercentage(value: number, total: number): number {
 }
 
 // Debounce function
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function debounce<T extends (...args: any[]) => any>(
   func: T,
   wait: number
@@ -218,7 +219,7 @@ export const storage = {
     }
   },
   
-  set: (key: string, value: any): void => {
+  set: (key: string, value: unknown): void => {
     if (typeof window === 'undefined') return;
     
     try {
