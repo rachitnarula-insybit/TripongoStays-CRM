@@ -224,7 +224,7 @@ async function apiCall<T>(
   endpoint: string, 
   options: RequestInit = {}
 ): Promise<ApiResponse<T>> {
-  const API_BASE_URL = 'https://triponso-backend-new.onrender.com';
+  const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL
   const url = `${API_BASE_URL}${endpoint}`;
 
   const defaultHeaders: Record<string, string> = {
