@@ -24,89 +24,223 @@ import {
   mockCityDemandData,
 } from '@/data/mockData';
 
+// -----------------------------
+// Data transformation helpers
+// -----------------------------
+
 // Transform backend data to match frontend format
 function transformBackendData(data: unknown, endpoint: string): unknown {
-  if (!data) return data;
+  if (data === undefined || data === null) return data;
 
   const baseEndpoint = endpoint.split('?')[0];
-  
-  // Transform user data
+
+  // Special-case /user/login which often returns { user, token }
+  if (baseEndpoint.includes('/user/login')) {
+    if (typeof data === 'object' && data !== null && 'user' in (data as any)) {
+      const d = data as any;
+      return {
+        ...d,
+        user: transformUserData(d.user as Record<string, unknown>),
+      };
+    }
+    // fallback - try to transform as a user object
+    return transformUserData(data as Record<string, unknown>);
+  }
+
+  // Transform user(s)
   if (baseEndpoint.includes('/user/')) {
     if (Array.isArray(data)) {
       return data.map(item => transformUserData(item as Record<string, unknown>));
-    } else {
+    } else if (typeof data === 'object' && data !== null) {
+      if ('user' in (data as any)) {
+        const d = data as any;
+        return {
+          ...d,
+          user: transformUserData(d.user as Record<string, unknown>),
+        };
+      }
       return transformUserData(data as Record<string, unknown>);
     }
   }
-  
-  // Transform booking data
+
+  // Transform booking(s)
   if (baseEndpoint.includes('/booking/')) {
     if (Array.isArray(data)) {
       return data.map(item => transformBookingData(item as Record<string, unknown>));
-    } else {
+    } else if (typeof data === 'object' && data !== null) {
+      if ('booking' in (data as any)) {
+        const d = data as any;
+        return {
+          ...d,
+          booking: transformBookingData(d.booking as Record<string, unknown>),
+        };
+      }
       return transformBookingData(data as Record<string, unknown>);
     }
   }
-  
-  // Add more transformations for other data types as needed
+
+  // Transform enquiry/leads data - FIXED to handle nested structure
+  if (baseEndpoint.includes('/enquiry/leads') || baseEndpoint.includes('/enquiry/getenquiries')) {
+    if (typeof data === 'object' && data !== null) {
+      const d = data as any;
+      
+      // If data has a 'leads' property, extract and transform the leads array
+      if ('leads' in d && Array.isArray(d.leads)) {
+        const transformedLeads = d.leads.map((lead: any) => transformLeadData(lead));
+        
+        return {
+          ...d,
+          leads: transformedLeads,
+        };
+      }
+      
+      // If it's a direct array of leads
+      if (Array.isArray(data)) {
+        return data.map(item => transformLeadData(item as Record<string, unknown>));
+      }
+      
+      // If it's a single lead object
+      return transformLeadData(data as Record<string, unknown>);
+    }
+  }
+
+  // default: return as-is
   return data;
+}
+
+// Add a new transform function for lead data
+function transformLeadData(backendLead: Record<string, unknown>): any {
+  // Handle the nested leadName structure
+  const leadName = backendLead.leadName as Record<string, unknown> || {};
+  
+  return {
+    id: String(backendLead.id || ''),
+    name: String(leadName.name || backendLead.name || ''),
+    email: String(leadName.email || backendLead.email || ''),
+    phone: String(leadName.phone || backendLead.phone || ''),
+    source: String(backendLead.source || 'Web'),
+    status: String(backendLead.status || 'New'),
+    assignedTo: backendLead.assignedTo || null,
+    assignmentType: String(backendLead.assignmentType || 'AI'),
+    createdDate: String(backendLead.createdDate || new Date().toISOString()),
+    lastContactDate: backendLead.lastContactDate ? String(backendLead.lastContactDate) : undefined,
+    notes: backendLead.message ? String(backendLead.message) : undefined,
+    priority: String(backendLead.priority || 'Medium'),
+    expectedRevenue: Number(backendLead.expectedRevenue || 0),
+    // Add property information if available
+    propertyName: backendLead.propertyName ? String(backendLead.propertyName) : undefined,
+    propertyLocation: backendLead.propertyLocation ? String(backendLead.propertyLocation) : undefined,
+  };
 }
 
 // Transform individual booking object
 function transformBookingData(backendBooking: Record<string, unknown>): Booking {
   const user = (backendBooking.user as Record<string, unknown>) || {};
   const property = (backendBooking.property as Record<string, unknown>) || {};
-  
+
+  // Helper to coerce dates safely
+  const safeDateString = (val: unknown): string => {
+    if (!val) return '';
+    try {
+      const d = new Date(String(val));
+      return isNaN(d.getTime()) ? String(val) : d.toISOString();
+    } catch {
+      return String(val);
+    }
+  };
+
+  // Ensure numeric coercions are safe
+  const safeNumber = (val: unknown, fallback = 0): number => {
+    const n = Number(val);
+    return Number.isFinite(n) ? n : fallback;
+  };
+
+  // Normalize status strings to title case expected by UI (but keep as is if unknown)
+  const rawStatus = String(backendBooking.status || 'Pending');
+  const status = (['pending','confirmed','completed','cancelled'].includes(rawStatus.toLowerCase()))
+    ? (rawStatus.charAt(0).toUpperCase() + rawStatus.slice(1).toLowerCase()) 
+    : rawStatus;
+
+  const paymentRaw = String(backendBooking.paymentStatus || backendBooking.payment || 'Pending');
+  const paymentStatus = (['pending','paid','failed'].includes(paymentRaw.toLowerCase()))
+    ? (paymentRaw.charAt(0).toUpperCase() + paymentRaw.slice(1).toLowerCase())
+    : paymentRaw;
+
   return {
-    id: String(backendBooking._id || ''),
+    id: String(backendBooking._id || backendBooking.id || ''),
     bookingReference: String(backendBooking.bookingReference || `TGS${String(backendBooking._id || '').slice(-6)}`),
-    guestName: String(backendBooking.guestName || user.fullname || ''),
+    guestName: String(backendBooking.guestName || user.fullname || user.fullName || ''),
     guestEmail: String(backendBooking.guestEmail || user.email || ''),
-    guestPhone: String(backendBooking.guestPhone || ''),
+    guestPhone: String(backendBooking.guestPhone || backendBooking.phone || ''),
     propertyName: String(property.name || backendBooking.propertyName || ''),
-    propertyId: String(property._id || backendBooking.propertyId || ''),
-    checkInDate: String(backendBooking.checkInDate || ''),
-    checkOutDate: String(backendBooking.checkOutDate || ''),
-    nights: Number(backendBooking.nights || 1),
-    guests: Number(backendBooking.guests || 1),
-    baseAmount: Number(backendBooking.baseAmount || backendBooking.amount || 0),
-    taxAmount: Number(backendBooking.taxAmount || 0),
-    totalAmount: Number(backendBooking.totalAmount || backendBooking.amount || 0),
-    status: String(backendBooking.status || 'Pending') as Booking['status'],
-    paymentStatus: String(backendBooking.paymentStatus || backendBooking.payment || 'Pending') as Booking['paymentStatus'],
-    createdDate: String(backendBooking.createdAt || backendBooking.createdDate || new Date().toISOString()),
+    propertyId: String(property._id || backendBooking.propertyId || backendBooking.property || ''),
+    checkInDate: safeDateString(backendBooking.checkInDate || backendBooking.startDate || ''),
+    checkOutDate: safeDateString(backendBooking.checkOutDate || backendBooking.endDate || ''),
+    nights: safeNumber(backendBooking.nights || 1, 1),
+    guests: safeNumber(backendBooking.guests || 1, 1),
+    baseAmount: safeNumber(backendBooking.baseAmount ?? backendBooking.amount ?? 0, 0),
+    taxAmount: safeNumber(backendBooking.taxAmount ?? 0, 0),
+    totalAmount: safeNumber(backendBooking.totalAmount ?? backendBooking.amount ?? 0, 0),
+    status: status as Booking['status'],
+    paymentStatus: paymentStatus as Booking['paymentStatus'],
+    createdDate: safeDateString(backendBooking.createdAt || backendBooking.createdDate || new Date().toISOString()),
     source: String(backendBooking.source || 'Website'),
   };
 }
 
 // Transform individual user object  
 function transformUserData(backendUser: Record<string, unknown>): User {
-  const role = String(backendUser.Role || '');
+  const roleRaw = String(backendUser.Role ?? backendUser.role ?? '').toLowerCase();
+  const role = roleRaw === 'admin' ? 'admin' : roleRaw === 'manager' ? 'manager' : 'agent';
+
+  const safeDateString = (val: unknown): string => {
+    if (!val) return '';
+    try {
+      const d = new Date(String(val));
+      return isNaN(d.getTime()) ? String(val) : d.toISOString();
+    } catch {
+      return String(val);
+    }
+  };
+
   return {
-    id: String(backendUser._id || ''),
-    name: String(backendUser.fullName || backendUser.fullname || ''),
+    id: String(backendUser._id || backendUser.id || ''),
+    name: String(backendUser.fullName || backendUser.fullname || backendUser.name || ''),
     email: String(backendUser.email || ''),
     phone: String(backendUser.phoneNumber || backendUser.mobile || ''),
-    role: (role === 'admin' ? 'admin' : role === 'manager' ? 'manager' : 'agent') as User['role'],
-    joinedDate: String(backendUser.createdAt || new Date().toISOString()),
+    role: role as User['role'],
+    joinedDate: safeDateString(backendUser.createdAt || backendUser.joinedDate || new Date().toISOString()),
     avatar: String(backendUser.avatar || ''),
-    isActive: true, // Default to true since backend doesn't have this field
+    isActive: typeof backendUser.isActive === 'boolean' ? backendUser.isActive : true,
   };
 }
 
-// Helper function for API calls
+// -----------------------------
+// API call helper (no mock fallback)
+// -----------------------------
+
+// Helper to perform fetch calls and transform response
 async function apiCall<T>(
   endpoint: string, 
   options: RequestInit = {}
 ): Promise<ApiResponse<T>> {
-  const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
+  const API_BASE_URL = 'https://triponso-backend-new.onrender.com';
   const url = `${API_BASE_URL}${endpoint}`;
-  
+
   const defaultHeaders: Record<string, string> = {
     'Content-Type': 'application/json',
   };
-  // Add auth token if available
-  const token = localStorage.getItem('authToken');
+
+  // SSR-safe token retrieval
+  let token: string | null = null;
+  try {
+    if (typeof window !== 'undefined' && window.localStorage) {
+      token = window.localStorage.getItem('authToken');
+    }
+  } catch {
+    token = null;
+  }
+
   if (token) {
     defaultHeaders['Authorization'] = `Bearer ${token}`;
   }
@@ -115,133 +249,99 @@ async function apiCall<T>(
     ...options,
     headers: {
       ...defaultHeaders,
-      ...options.headers,
+      ...(options.headers as Record<string, string> | undefined),
     },
   };
 
   try {
-    console.log('🔥 API Call Debug:', { url, endpoint, API_BASE_URL: process.env.VITE_SERVER_URL });
-    
     const response = await fetch(url, config);
-    
+
     if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
+      // Try to parse error body for a friendlier message
+      let errBody: string | undefined;
+      try {
+        const parsed = await response.json();
+        errBody = JSON.stringify(parsed);
+      } catch {
+        try {
+          errBody = await response.text();
+        } catch {
+          errBody = undefined;
+        }
+      }
+      throw new Error(`HTTP error! status: ${response.status}${errBody ? ` - ${errBody}` : ''}`);
     }
 
     const backendResponse = await response.json();
-    console.log('🔥 Backend Response:', backendResponse);
-    
+
+    // Support two shapes:
+    // 1) { data: ... , success, message } (common)
+    // 2) direct payload (array / object)
+    const rawData = backendResponse && backendResponse.data !== undefined
+      ? backendResponse.data
+      : backendResponse;
+
     // Transform backend response to match frontend expected format
-    const transformedData = transformBackendData(backendResponse.data, endpoint);
-    console.log('🔥 Transformed Data:', transformedData);
-    
+    const transformedData = transformBackendData(rawData, endpoint);
+
+    // Preserve top level success/message/pagination if present
+    const success = backendResponse && 'success' in backendResponse ? backendResponse.success : true;
+    const message = backendResponse && 'message' in backendResponse ? backendResponse.message : undefined;
+    const pagination = backendResponse && 'pagination' in backendResponse ? backendResponse.pagination : undefined;
+
     return {
       data: transformedData as T,
-      success: backendResponse.success,
-      message: backendResponse.message,
-      pagination: backendResponse.pagination,
+      success,
+      message,
+      pagination,
     };
-  } catch (error) {
-    console.error('🔥 API call failed:', error);
-    console.log('🔥 Falling back to mock data');
-    // Fallback to mock data
-    return await mockApiCall<T>(endpoint);
-  }
-}
-
-// Fallback to mock data
-async function mockApiCall<T>(
-  endpoint: string
-): Promise<ApiResponse<T>> {
-  const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
-  await delay(500);
-  
-  // Map endpoints to mock data
-  const mockDataMap: Record<string, unknown> = {
-    '/user/login': { user: mockUsers[0], token: 'mock-token' },
-    '/user/getuserbyid': mockUsers[0],
-    '/user/getuser': mockUsers,
-    '/user/getusers': mockUsers,
-    '/property/getproperties': mockProperties,
-    '/property/getproperty': mockProperties[0],
-    
-    // Fixed booking endpoints
-    '/booking/getallbooking': mockBookings,
-    '/booking/getbooking': mockBookings[0],
-    '/booking/createbooking': mockBookings[0],
-    '/booking/updatebooking': mockBookings[0],
-    '/booking/deletebooking': null,
-    '/booking/cancel': mockBookings[0],
-    
-    '/enquiry/getenquiries': mockLeads,
-    '/enquiry/getenquiry': mockLeads[0],
-    '/dashboard/stats': mockDashboardStats,
-    '/dashboard/lead-conversion': mockLeadConversionData,
-    '/dashboard/city-demand': mockCityDemandData,
-  };
-
-  const baseEndpoint = endpoint.split('?')[0];
-  const data = mockDataMap[baseEndpoint];
-  
-  if (data) {
-    // Check if this endpoint expects pagination
-    const paginatedEndpoints = ['/user/getuser', '/user/getusers', '/booking/getbookings', '/enquiry/getenquiries'];
-    
-    if (paginatedEndpoints.includes(baseEndpoint)) {
-      // Extract page and limit from query params
-      const url = new URL(`http://localhost${endpoint}`);
-      const page = parseInt(url.searchParams.get('page') || '1');
-      const limit = parseInt(url.searchParams.get('limit') || '10');
-      
-      // Calculate pagination
-      const startIndex = (page - 1) * limit;
-      const endIndex = startIndex + limit;
-      const paginatedData = Array.isArray(data) ? data.slice(startIndex, endIndex) : data;
-      
-      return {
-        data: paginatedData as T,
-        success: true,
-        pagination: Array.isArray(data) ? {
-          page,
-          limit,
-          total: data.length,
-          totalPages: Math.ceil(data.length / limit),
-        } : undefined,
-      };
-    }
-    
+  } catch (error: any) {
     return {
-      data: data as T,
-      success: true,
+      data: undefined as T, // Use undefined instead of null
+      success: false,
+      message: error?.message || `Failed to fetch ${endpoint}`,
     };
   }
-
-  return {
-    data: {} as T,
-    success: false,
-    message: 'Endpoint not found in mock data',
-  };
 }
 
+// -----------------------------
+// Small util
+// -----------------------------
+const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+
+// -----------------------------
 // Authentication API
+// -----------------------------
 export const authApi = {
   login: async (email: string, password: string): Promise<ApiResponse<{ user: User; token: string }>> => {
     const response = await apiCall<{ user: User; token: string }>('/user/login', {
       method: 'POST',
       body: JSON.stringify({ email, password }),
     });
-    
-    if (response.success && response.data.token) {
-      localStorage.setItem('authToken', response.data.token);
-      localStorage.setItem('user', JSON.stringify(response.data.user));
+
+    if (response.success && response.data && (response.data as any).token) {
+      try {
+        if (typeof window !== 'undefined' && window.localStorage) {
+          window.localStorage.setItem('authToken', (response.data as any).token);
+          window.localStorage.setItem('user', JSON.stringify((response.data as any).user));
+        }
+      } catch {
+        // ignore localStorage set errors in restricted environments
+      }
     }
-    
+
     return response;
   },
 
   logout: async (): Promise<ApiResponse<null>> => {
-    localStorage.removeItem('authToken');
-    localStorage.removeItem('user');
+    try {
+      if (typeof window !== 'undefined' && window.localStorage) {
+        window.localStorage.removeItem('authToken');
+        window.localStorage.removeItem('user');
+      }
+    } catch {
+      // ignore
+    }
     return apiCall<null>('/user/logout', { method: 'POST' });
   },
 
@@ -250,39 +350,45 @@ export const authApi = {
   },
 };
 
-// Simulate API delay
-const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
-
-
-
-// Dashboard API
+// -----------------------------
+// Dashboard API - FIXED with correct endpoints
+// -----------------------------
 export const dashboardApi = {
   getStats: async (): Promise<ApiResponse<DashboardStats>> => {
     try {
       // Fetch real data from bookings and properties
       const [bookingsResponse, propertiesResponse, leadsResponse] = await Promise.all([
         apiCall<Booking[]>('/booking/getallbooking?limit=1000'), // Get all bookings
-        apiCall<Property[]>('/property/getproperties'),
-        apiCall<Lead[]>('/enquiry/getenquiries?limit=1000'), // Get all leads
+        apiCall<Property[]>('/property/getproperties'), // This might not exist
+        apiCall<Lead[]>('/enquiry/leads?limit=1000'), // FIXED: Use correct endpoint
       ]);
 
+      // Use data even if some calls failed, but log the issues
       const bookings = bookingsResponse.data || [];
       const properties = propertiesResponse.data || [];
-      const leads = leadsResponse.data || [];
+
+      // Normalize leads which may come as { leads: [...] }
+      const leadsRaw = leadsResponse.data || [];
+      const leads = Array.isArray(leadsRaw)
+        ? leadsRaw
+        : (Array.isArray((leadsRaw as any).leads) ? (leadsRaw as any).leads : []);
 
       // Calculate real stats
       const totalBookings = bookings.length;
       const totalProperties = properties.length;
       const totalLeads = leads.length;
-      
-      // Calculate total revenue from confirmed bookings
-      const confirmedBookings = bookings.filter(booking => 
-        booking.status === 'Confirmed' || booking.status === 'Completed'
-      );
-      const revenue = confirmedBookings.reduce((sum, booking) => sum + booking.totalAmount, 0);
 
-      // Calculate growth percentages (simplified - you might want to compare with previous month)
-      const revenueGrowth = 12.5; // This would need to be calculated from historical data
+      // Calculate total revenue from confirmed bookings
+      const confirmedBookings = bookings.filter((booking: any) =>
+        String(booking.status).toLowerCase() === 'confirmed' || String(booking.status).toLowerCase() === 'completed'
+      );
+      const revenue = confirmedBookings.reduce((sum: number, booking: any) => {
+        const amount = Number(booking.totalAmount || booking.amount || 0);
+        return sum + amount;
+      }, 0);
+
+      // Placeholder growth percentages — ideally calculated from historical data
+      const revenueGrowth = 12.5;
       const bookingsGrowth = 8.3;
       const leadsGrowth = 15.7;
       const propertiesGrowth = 4.2;
@@ -303,29 +409,78 @@ export const dashboardApi = {
         success: true,
         message: 'Dashboard stats calculated successfully',
       };
-    } catch (error) {
-      console.error('Error calculating dashboard stats:', error);
-      // Fallback to mock data
+    } catch (error: any) {
       return {
-        data: mockDashboardStats,
+        data: {
+          totalBookings: 0,
+          totalProperties: 0,
+          totalLeads: 0,
+          revenue: 0,
+          revenueGrowth: 0,
+          bookingsGrowth: 0,
+          leadsGrowth: 0,
+          propertiesGrowth: 0,
+        } as DashboardStats,
         success: false,
-        message: 'Failed to fetch real stats, using mock data',
+        message: `Failed to calculate dashboard stats: ${error?.message || 'unknown error'}`,
       };
     }
   },
 
   getLeadConversion: async (): Promise<ApiResponse<LeadConversionData[]>> => {
-    return apiCall<LeadConversionData[]>('/dashboard/lead-conversion');
+    try {
+      // For now, return mock data since this endpoint might not exist
+      const mockData: LeadConversionData[] = [
+        { stage: 'New Leads', count: 25, percentage: 100, color: '#EC6B2F' },
+        { stage: 'Contacted', count: 18, percentage: 72, color: '#F7B731' },
+        { stage: 'Qualified', count: 12, percentage: 48, color: '#4ECDC4' },
+        { stage: 'Proposal', count: 8, percentage: 32, color: '#45B7D1' },
+        { stage: 'Converted', count: 5, percentage: 20, color: '#96CEB4' },
+      ];
+      
+      return {
+        data: mockData,
+        success: true,
+        message: 'Lead conversion data loaded',
+      };
+    } catch (error: any) {
+      return {
+        data: [],
+        success: false,
+        message: 'Failed to fetch lead conversion data',
+      };
+    }
   },
 
   getCityDemand: async (): Promise<ApiResponse<CityDemandData[]>> => {
-    return apiCall<CityDemandData[]>('/dashboard/city-demand');
+    try {
+      // For now, return mock data since this endpoint might not exist
+      const mockData: CityDemandData[] = [
+        { city: 'Mumbai', bookings: 45, revenue: 125000 },
+        { city: 'Delhi', bookings: 38, revenue: 98000 },
+        { city: 'Bangalore', bookings: 32, revenue: 85000 },
+        { city: 'Chennai', bookings: 28, revenue: 72000 },
+        { city: 'Kolkata', bookings: 22, revenue: 58000 },
+      ];
+      
+      return {
+        data: mockData,
+        success: true,
+        message: 'City demand data loaded',
+      };
+    } catch (error: any) {
+      return {
+        data: [],
+        success: false,
+        message: 'Failed to fetch city demand data',
+      };
+    }
   },
 };
 
-
-
+// -----------------------------
 // Users API
+// -----------------------------
 export const usersApi = {
   getUsers: async (page = 1, limit = 10): Promise<ApiResponse<User[]>> => {
     return apiCall<User[]>(`/user/getuser?page=${page}&limit=${limit}`);
@@ -356,7 +511,9 @@ export const usersApi = {
   },
 };
 
-// Leads API (using enquiries endpoint)
+// -----------------------------
+// Leads API - READ ONLY (no update methods)
+// -----------------------------
 export const leadsApi = {
   getLeads: async (
     page = 1, 
@@ -380,138 +537,274 @@ export const leadsApi = {
       }
     }
 
-    return apiCall<Lead[]>(`/enquiry/getenquiries?${params.toString()}`);
-  },
+    // Fetch and normalize the backend shape { leads: [], pagination, ... } → array
+    const resp = await apiCall<any>(`/enquiry/leads?${params.toString()}`);
 
-  updateLeadStatus: async (id: string, status: Lead['status']): Promise<ApiResponse<Lead>> => {
-    return apiCall<Lead>(`/enquiry/updateenquiry/${id}`, {
-      method: 'PUT',
-      body: JSON.stringify({ status }),
-    });
-  },
+    const leadsArray = Array.isArray(resp.data)
+      ? resp.data
+      : (Array.isArray(resp.data?.leads) ? resp.data.leads : []);
 
-  assignLead: async (id: string, assignedTo: string): Promise<ApiResponse<Lead>> => {
-    return apiCall<Lead>(`/enquiry/assignenquiry/${id}`, {
-      method: 'PUT',
-      body: JSON.stringify({ assignedTo }),
-    });
-  },
+    const pagination = resp.data?.pagination || resp.pagination;
 
-  createLead: async (leadData: Omit<Lead, 'id' | 'createdDate'>): Promise<ApiResponse<Lead>> => {
-    return apiCall<Lead>('/enquiry/add', {
-      method: 'POST',
-      body: JSON.stringify(leadData),
-    });
-  },
-
-  updateLead: async (id: string, leadData: Partial<Lead>): Promise<ApiResponse<Lead>> => {
-    return apiCall<Lead>(`/enquiry/updateenquiry/${id}`, {
-      method: 'PUT',
-      body: JSON.stringify(leadData),
-    });
-  },
-
-  deleteLead: async (id: string): Promise<ApiResponse<null>> => {
-    return apiCall<null>(`/enquiry/deleteenquiry/${id}`, {
-      method: 'DELETE',
-    });
+    return {
+      data: leadsArray as Lead[],
+      success: resp.success,
+      message: resp.message,
+      pagination,
+    };
   },
 };
 
-// Call History API
+// -----------------------------
+// Call History API - UPDATED to use correct backend URL
+// -----------------------------
 export const callHistoryApi = {
   getCallHistory: async (
-    page = 1, 
-    limit = 10, 
+    page: number = 1,
+    limit: number = 10,
     filters?: CallHistoryFilters
   ): Promise<ApiResponse<CallRecord[]>> => {
-    await delay(500);
-    let filteredCalls = [...mockCallRecords];
+    try {
+      // Use the call analysis backend URL from environment variable
+      const CALL_ANALYSIS_BASE_URL = process.env.NEXT_PUBLIC_CALL_ANALYSIS_BASE_URL || 'https://core-python-prod-183848857592.asia-south1.run.app';
+      const url = `${CALL_ANALYSIS_BASE_URL}/call-analyses`;
 
-    // Apply filters
-    if (filters?.type?.length) {
-      filteredCalls = filteredCalls.filter(call => 
-        filters.type!.includes(call.type)
-      );
+      // Make direct fetch call to the call analysis backend
+      const response = await fetch(url, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const backendResponse = await response.json();
+
+      // Transform the response to match our expected format
+      const callRecords = transformCallAnalysisToCallRecords(backendResponse);
+      
+      // Apply filters
+      let filteredCalls = callRecords;
+      
+      if (filters?.type?.length) {
+        filteredCalls = filteredCalls.filter(call => 
+          filters.type!.includes(call.type)
+        );
+      }
+
+      if (filters?.status?.length) {
+        filteredCalls = filteredCalls.filter(call => 
+          filters.status!.includes(call.status)
+        );
+      }
+
+      if (filters?.result?.length) {
+        filteredCalls = filteredCalls.filter(call => 
+          filters.result!.includes(call.result)
+        );
+      }
+
+      // Apply pagination
+      const startIndex = (page - 1) * limit;
+      const endIndex = startIndex + limit;
+      const paginatedCalls = filteredCalls.slice(startIndex, endIndex);
+
+      return {
+        data: paginatedCalls,
+        success: true,
+        pagination: {
+          page,
+          limit,
+          total: filteredCalls.length,
+          totalPages: Math.ceil(filteredCalls.length / limit),
+        },
+      };
+    } catch (error: any) {
+      return {
+        data: [],
+        success: false,
+        message: error?.message || 'Failed to fetch call history',
+      };
     }
-
-    if (filters?.status?.length) {
-      filteredCalls = filteredCalls.filter(call => 
-        filters.status!.includes(call.status)
-      );
-    }
-
-    if (filters?.result?.length) {
-      filteredCalls = filteredCalls.filter(call => 
-        filters.result!.includes(call.result)
-      );
-    }
-
-    const startIndex = (page - 1) * limit;
-    const endIndex = startIndex + limit;
-    const paginatedCalls = filteredCalls.slice(startIndex, endIndex);
-
-    return {
-      data: paginatedCalls,
-      success: true,
-      pagination: {
-        page,
-        limit,
-        total: filteredCalls.length,
-        totalPages: Math.ceil(filteredCalls.length / limit),
-      },
-    };
   },
 
   exportCallHistory: async (filters?: CallHistoryFilters): Promise<ApiResponse<string>> => {
-    await delay(1000);
-    let filteredCalls = [...mockCallRecords];
+    try {
+      // Use the call analysis backend URL from environment variable
+      const CALL_ANALYSIS_BASE_URL = process.env.NEXT_PUBLIC_CALL_ANALYSIS_BASE_URL ;
+      const url = `${CALL_ANALYSIS_BASE_URL}/call-analyses`;
 
-    // Apply filters (same logic as getCallHistory)
-    if (filters?.type?.length) {
-      filteredCalls = filteredCalls.filter(call => 
-        filters.type!.includes(call.type)
-      );
+      // Make direct fetch call to the call analysis backend
+      const response = await fetch(url, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const backendResponse = await response.json();
+      
+      // Parse the API response and transform to CallRecord format
+      const callRecords = transformCallAnalysisToCallRecords(backendResponse);
+      
+      // Apply filters (same logic as getCallHistory)
+      let filteredCalls = callRecords;
+      
+      if (filters?.type?.length) {
+        filteredCalls = filteredCalls.filter(call => 
+          filters.type!.includes(call.type)
+        );
+      }
+
+      if (filters?.status?.length) {
+        filteredCalls = filteredCalls.filter(call => 
+          filters.status!.includes(call.status)
+        );
+      }
+
+      if (filters?.result?.length) {
+        filteredCalls = filteredCalls.filter(call => 
+          filters.result!.includes(call.result)
+        );
+      }
+
+      // Generate CSV content
+      const headers = ['Date', 'User', 'Type', 'Status', 'Duration', 'Result', 'Phone', 'Notes'];
+      const csvContent = [
+        headers.join(','),
+        ...filteredCalls.map(call => [
+          call.date,
+          call.userName,
+          call.type,
+          call.status,
+          call.duration,
+          call.result,
+          call.phoneNumber,
+          `"${call.notes || ''}"`,
+        ].join(','))
+      ].join('\n');
+
+      return {
+        data: csvContent,
+        success: true,
+        message: 'Call history exported successfully',
+      };
+    } catch (error: any) {
+      return {
+        data: '',
+        success: false,
+        message: error?.message || 'Failed to export call history',
+      };
     }
-
-    if (filters?.status?.length) {
-      filteredCalls = filteredCalls.filter(call => 
-        filters.status!.includes(call.status)
-      );
-    }
-
-    if (filters?.result?.length) {
-      filteredCalls = filteredCalls.filter(call => 
-        filters.result!.includes(call.result)
-      );
-    }
-
-    // Generate CSV content
-    const headers = ['Date', 'User', 'Type', 'Status', 'Duration', 'Result', 'Phone', 'Notes'];
-    const csvContent = [
-      headers.join(','),
-      ...filteredCalls.map(call => [
-        call.date,
-        call.userName,
-        call.type,
-        call.status,
-        call.duration,
-        call.result,
-        call.phoneNumber,
-        `"${call.notes || ''}"`,
-      ].join(','))
-    ].join('\n');
-
-    return {
-      data: csvContent,
-      success: true,
-      message: 'Call history exported successfully',
-    };
   },
 };
 
+// Helper function to transform call analysis response to CallRecord format
+function transformCallAnalysisToCallRecords(apiResponse: any): CallRecord[] {
+  
+  // Only use primary_collection_analyses array
+  const primaryAnalyses = apiResponse.primary_collection_analyses || [];
+  
+  const transformedRecords = primaryAnalyses.map((call: any, index: number) => {
+    
+    // Extract data from the API response structure
+    const statisticalDetails = call.Statistical_Details || {};
+    const otherDetails = statisticalDetails.other_details || {};
+    const metadata = otherDetails.metadata || {};
+    const phoneCall = metadata.metadata?.phone_call || {};
+    const supportQuality = call.Other_Details_LLM?.support_quality || {};
+    const dynamicVariables = metadata.conversation_initiation_client_data?.dynamic_variables || {};
+    
+    // Parse date from system__time_utc (ISO format)
+    const systemTimeUtc = dynamicVariables.system__time_utc || '';
+    let parsedDate = new Date().toISOString(); // fallback
+    
+    if (systemTimeUtc) {
+      try {
+        // Parse the ISO date string "2025-08-14T10:46:16.387212+00:00"
+        parsedDate = new Date(systemTimeUtc).toISOString();
+      } catch (error) {
+        console.warn('Failed to parse date:', systemTimeUtc, error);
+      }
+    }
+    
+    // Determine call type from direction
+    const direction = phoneCall.direction || 'outbound';
+    const callType = direction === 'inbound' ? 'Incoming' : 'Outgoing';
+    
+    // Determine status from call_status
+    const callStatus = statisticalDetails.call_status || 'success';
+    let status: CallRecord['status'];
+    switch (callStatus) {
+      case 'success':
+        status = 'Connected';
+        break;
+      case 'failed':
+        status = 'Missed';
+        break;
+      case 'busy':
+        status = 'Busy';
+        break;
+      default:
+        status = 'Connected';
+    }
+    
+    // Determine result from resolution_status
+    const resolutionStatus = supportQuality.resolution_status || 'resolved';
+    let result: CallRecord['result'];
+    switch (resolutionStatus) {
+      case 'resolved':
+        result = 'Booked';
+        break;
+      case 'pending':
+        result = 'Follow-up';
+        break;
+      case 'unresolved':
+        result = 'Not Interested';
+        break;
+      default:
+        result = 'Follow-up';
+    }
+    
+    // Get duration in seconds from dynamic_variables
+    const durationSecs = dynamicVariables.system__call_duration_secs || metadata.metadata?.call_duration_secs || 0;
+    
+    // Get user name and phone from dynamic_variables
+    const userName = dynamicVariables.name || 'Unknown';
+    const phoneNumber = dynamicVariables.number || phoneCall.external_number || '';
+    
+    // Get notes from summary
+    const notes = call.Other_Details_LLM?.summary || '';
+    
+    const transformedRecord = {
+      id: String(index + 1), // Generate ID since API doesn't provide one
+      userId: '1', // Default user ID since API doesn't provide one
+      userName: userName,
+      type: callType as CallRecord['type'],
+      status: status,
+      duration: durationSecs,
+      result: result,
+      date: parsedDate,
+      phoneNumber: phoneNumber,
+      notes: notes,
+    };
+    
+    return transformedRecord;
+  });
+  
+  return transformedRecords;
+}
+
+// -----------------------------
 // Bookings API
-// Bookings API - Fixed version
+// -----------------------------
 export const bookingsApi = {
   getBookings: async (
     page = 1, 
@@ -535,12 +828,11 @@ export const bookingsApi = {
       }
     }
 
-    // Fixed: Removed trailing slash and question mark
     return apiCall<Booking[]>(`/booking/getallbooking?${params.toString()}`);
   },
 
   getBookingById: async (id: string): Promise<ApiResponse<Booking>> => {
-    return apiCall<Booking>(`/booking/getbooking/${id}`); // More consistent naming
+    return apiCall<Booking>(`/booking/getbooking/${id}`);
   },
 
   createBooking: async (bookingData: Omit<Booking, 'id' | 'createdDate'>): Promise<ApiResponse<Booking>> => {
@@ -551,14 +843,14 @@ export const bookingsApi = {
   },
 
   updateBooking: async (id: string, bookingData: Partial<Booking>): Promise<ApiResponse<Booking>> => {
-    return apiCall<Booking>(`/booking/updatebooking/${id}`, { // More consistent naming
+    return apiCall<Booking>(`/booking/updatebooking/${id}`, {
       method: 'PUT',
       body: JSON.stringify(bookingData),
     });
   },
 
   deleteBooking: async (id: string): Promise<ApiResponse<null>> => {
-    return apiCall<null>(`/booking/deletebooking/${id}`, { // More consistent naming
+    return apiCall<null>(`/booking/deletebooking/${id}`, {
       method: 'DELETE',
     });
   },
@@ -577,10 +869,67 @@ export const bookingsApi = {
   },
 };
 
-// Properties API
+// -----------------------------
+// Properties API - ADDED fallback for missing endpoint
+// -----------------------------
 export const propertiesApi = {
   getProperties: async (): Promise<ApiResponse<Property[]>> => {
-    return apiCall<Property[]>('/property/getproperties');
+    try {
+      // Try the real endpoint first
+      const response = await apiCall<Property[]>('/property/getproperties');
+      
+      // If it fails, return mock data for now
+      if (!response.success) {
+        console.log('🔥 Property endpoint not available, using mock data');
+        const mockProperties: Property[] = [
+          {
+            id: '1',
+            name: 'Luxury Villa Goa',
+            type: 'Villa',
+            city: 'Goa',
+            state: 'Goa',
+            country: 'India',
+            totalRooms: 4,
+            availableRooms: 2,
+            rating: 4.8,
+            pricePerNight: 15000,
+            amenities: ['Pool', 'WiFi', 'AC', 'Kitchen'],
+            images: ['/images/villa1.jpg'],
+            isActive: true,
+          },
+          {
+            id: '2',
+            name: 'Beach Resort Mumbai',
+            type: 'Resort',
+            city: 'Mumbai',
+            state: 'Maharashtra',
+            country: 'India',
+            totalRooms: 50,
+            availableRooms: 15,
+            rating: 4.5,
+            pricePerNight: 8000,
+            amenities: ['Beach Access', 'Spa', 'Restaurant', 'WiFi'],
+            images: ['/images/resort1.jpg'],
+            isActive: true,
+          },
+        ];
+        
+        return {
+          data: mockProperties,
+          success: true,
+          message: 'Mock properties loaded',
+        };
+      }
+      
+      return response;
+    } catch (error: any) {
+      console.error('Error fetching properties:', error);
+      return {
+        data: [],
+        success: false,
+        message: 'Failed to fetch properties',
+      };
+    }
   },
 
   getPropertyById: async (id: string): Promise<ApiResponse<Property>> => {

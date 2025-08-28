@@ -8,7 +8,7 @@ const InventoryPage: React.FC = () => {
   const [hasError, setHasError] = useState(false);
   const [iframeKey, setIframeKey] = useState(0);
 
-  const inventoryUrl = 'https://tripongostays-admin.vercel.app/';
+  const inventoryUrl = 'https://triponso-admin.vercel.app/';
 
   useEffect(() => {
     const timer = setTimeout(() => {

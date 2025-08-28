@@ -28,6 +28,9 @@ const CityDemandChart: React.FC<CityDemandChartProps> = ({ data, isLoading }) =>
     );
   }
 
+  // Ensure data is an array and handle null/undefined cases
+  const safeData = Array.isArray(data) ? data : [];
+
   const CustomTooltip = ({ active, payload, label }: {
     active?: boolean;
     payload?: Array<{
@@ -58,52 +61,62 @@ const CityDemandChart: React.FC<CityDemandChartProps> = ({ data, isLoading }) =>
         <CardTitle>City-wise Demand</CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="h-80">
-          <ResponsiveContainer width="100%" height="100%">
-            <BarChart
-              data={data}
-              margin={{
-                top: 20,
-                right: 30,
-                left: 20,
-                bottom: 5,
-              }}
-            >
-              <CartesianGrid strokeDasharray="3 3" stroke="#E0E0E0" />
-              <XAxis 
-                dataKey="city" 
-                tick={{ fontSize: 12, fill: '#666666' }}
-                axisLine={{ stroke: '#E0E0E0' }}
-              />
-              <YAxis 
-                tick={{ fontSize: 12, fill: '#666666' }}
-                axisLine={{ stroke: '#E0E0E0' }}
-              />
-              <Tooltip content={<CustomTooltip />} />
-              <Bar 
-                dataKey="bookings" 
-                fill="#EC6B2F" 
-                radius={[4, 4, 0, 0]}
-                className="hover:opacity-80 transition-opacity"
-              />
-            </BarChart>
-          </ResponsiveContainer>
-        </div>
-        
-        <div className="mt-4 grid grid-cols-2 gap-4">
-          <div className="text-center p-3 bg-neutral-light-gray rounded-lg">
-            <p className="text-sm text-neutral-gray">Top City</p>
-            <p className="font-medium text-neutral-black">
-              {data.length > 0 ? data[0].city : 'N/A'}
-            </p>
+        {safeData.length > 0 ? (
+          <>
+            <div className="h-80">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart
+                  data={safeData}
+                  margin={{
+                    top: 20,
+                    right: 30,
+                    left: 20,
+                    bottom: 5,
+                  }}
+                >
+                  <CartesianGrid strokeDasharray="3 3" stroke="#E0E0E0" />
+                  <XAxis 
+                    dataKey="city" 
+                    tick={{ fontSize: 12, fill: '#666666' }}
+                    axisLine={{ stroke: '#E0E0E0' }}
+                  />
+                  <YAxis 
+                    tick={{ fontSize: 12, fill: '#666666' }}
+                    axisLine={{ stroke: '#E0E0E0' }}
+                  />
+                  <Tooltip content={<CustomTooltip />} />
+                  <Bar 
+                    dataKey="bookings" 
+                    fill="#EC6B2F" 
+                    radius={[4, 4, 0, 0]}
+                    className="hover:opacity-80 transition-opacity"
+                  />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+            
+            <div className="mt-4 grid grid-cols-2 gap-4">
+              <div className="text-center p-3 bg-neutral-light-gray rounded-lg">
+                <p className="text-sm text-neutral-gray">Top City</p>
+                <p className="font-medium text-neutral-black">
+                  {safeData[0].city}
+                </p>
+              </div>
+              <div className="text-center p-3 bg-neutral-light-gray rounded-lg">
+                <p className="text-sm text-neutral-gray">Total Revenue</p>
+                <p className="font-medium text-neutral-black">
+                  {formatCurrency(safeData.reduce((sum, city) => sum + city.revenue, 0))}
+                </p>
+              </div>
+            </div>
+          </>
+        ) : (
+          <div className="h-80 flex items-center justify-center">
+            <div className="text-center">
+              <p className="text-neutral-gray">No city demand data available</p>
+            </div>
           </div>
-          <div className="text-center p-3 bg-neutral-light-gray rounded-lg">
-            <p className="text-sm text-neutral-gray">Total Revenue</p>
-            <p className="font-medium text-neutral-black">
-              {formatCurrency(data.reduce((sum, city) => sum + city.revenue, 0))}
-            </p>
-          </div>
-        </div>
+        )}
       </CardContent>
     </Card>
   );

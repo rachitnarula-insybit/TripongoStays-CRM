@@ -1,7 +1,6 @@
 import React, { useState, useMemo } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import { Search, Phone, MessageCircle, ChevronDown } from 'lucide-react';
-import toast from 'react-hot-toast';
 import { leadsApi } from '@/services/api';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
@@ -28,8 +27,10 @@ const LeadsPage: React.FC = () => {
   const [sortKey, setSortKey] = useState<string>('');
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
   const [filters, setFilters] = useState<LeadFilters>({});
+  
+  // Local state for managing lead updates (no API calls)
+  const [localLeads, setLocalLeads] = useState<Lead[]>([]);
 
-  const queryClient = useQueryClient();
   const limit = 10;
 
   const {
@@ -41,44 +42,22 @@ const LeadsPage: React.FC = () => {
     queryFn: () => leadsApi.getLeads(currentPage, limit, filters),
   });
 
-  const updateStatusMutation = useMutation({
-    mutationFn: ({ id, status }: { id: string; status: Lead['status'] }) =>
-      leadsApi.updateLeadStatus(id, status),
-    onSuccess: (response) => {
-      if (response.success) {
-        toast.success(response.message || 'Lead status updated successfully');
-        queryClient.invalidateQueries({ queryKey: ['leads'] });
-      } else {
-        toast.error(response.message || 'Failed to update lead status');
-      }
-    },
-    onError: () => {
-      toast.error('An error occurred while updating lead status');
-    },
-  });
-
-  const assignLeadMutation = useMutation({
-    mutationFn: ({ id, assignedTo }: { id: string; assignedTo: string }) =>
-      leadsApi.assignLead(id, assignedTo),
-    onSuccess: (response) => {
-      if (response.success) {
-        toast.success(response.message || 'Lead assigned successfully');
-        queryClient.invalidateQueries({ queryKey: ['leads'] });
-      } else {
-        toast.error(response.message || 'Failed to assign lead');
-      }
-    },
-    onError: () => {
-      toast.error('An error occurred while assigning lead');
-    },
-  });
+  // Update local leads when API data changes
+  useMemo(() => {
+    if (leadsResponse?.data && Array.isArray(leadsResponse.data)) {
+      setLocalLeads(leadsResponse.data);
+    }
+  }, [leadsResponse?.data]);
 
   const pagination = leadsResponse?.pagination;
 
-  // Filter and sort leads
+  // Filter and sort leads - FIXED with safety checks
   const filteredAndSortedLeads = useMemo(() => {
-    const leads = leadsResponse?.data || [];
-    let result = filterBySearch(leads, searchTerm, ['name', 'email', 'phone', 'source', 'status']);
+    const leads = localLeads.length > 0 ? localLeads : (leadsResponse?.data || []);
+    // Ensure leads is an array
+    const safeLeads = Array.isArray(leads) ? leads : [];
+    
+    let result = filterBySearch(safeLeads, searchTerm, ['name', 'email', 'phone', 'source', 'status']);
     
     if (sortKey) {
       result = result.sort((a, b) => {
@@ -121,7 +100,7 @@ const LeadsPage: React.FC = () => {
     }
     
     return result;
-  }, [leadsResponse?.data, searchTerm, sortKey, sortDirection]);
+  }, [localLeads, leadsResponse?.data, searchTerm, sortKey, sortDirection]);
 
   const debouncedSearch = debounce((value: string) => {
     setSearchTerm(value);
@@ -147,12 +126,25 @@ const LeadsPage: React.FC = () => {
     setCurrentPage(1);
   };
 
-  const handleStatusChange = (lead: Lead, newStatus: Lead['status']) => {
-    updateStatusMutation.mutate({ id: lead.id, status: newStatus });
+  // Local update functions (no API calls)
+  const handleStatusChange = (leadId: string, newStatus: Lead['status']) => {
+    setLocalLeads(prev => 
+      prev.map(lead => 
+        lead.id === leadId 
+          ? { ...lead, status: newStatus }
+          : lead
+      )
+    );
   };
 
-  const handleAssignLead = (lead: Lead, assignedTo: string) => {
-    assignLeadMutation.mutate({ id: lead.id, assignedTo });
+  const handleAssignLead = (leadId: string, assignedTo: string) => {
+    setLocalLeads(prev => 
+      prev.map(lead => 
+        lead.id === leadId 
+          ? { ...lead, assignedTo }
+          : lead
+      )
+    );
   };
 
   const handleWhatsApp = (lead: Lead) => {
@@ -189,7 +181,7 @@ const LeadsPage: React.FC = () => {
                 key={status}
                 className="w-full px-3 py-2 text-left text-sm hover:bg-neutral-light-gray first:rounded-t-lg last:rounded-b-lg"
                 onClick={() => {
-                  handleStatusChange(lead, status);
+                  handleStatusChange(lead.id, status);
                   setIsOpen(false);
                 }}
               >
@@ -231,7 +223,7 @@ const LeadsPage: React.FC = () => {
             <button
               className="w-full px-3 py-2 text-left text-sm hover:bg-neutral-light-gray first:rounded-t-lg"
               onClick={() => {
-                handleAssignLead(lead, '');
+                handleAssignLead(lead.id, '');
                 setIsOpen(false);
               }}
             >
@@ -242,7 +234,7 @@ const LeadsPage: React.FC = () => {
                 key={agent.id}
                 className="w-full px-3 py-2 text-left text-sm hover:bg-neutral-light-gray last:rounded-b-lg"
                 onClick={() => {
-                  handleAssignLead(lead, agent.id);
+                  handleAssignLead(lead.id, agent.id);
                   setIsOpen(false);
                 }}
               >
@@ -345,7 +337,7 @@ const LeadsPage: React.FC = () => {
           <p className="text-secondary-red">Failed to load leads</p>
           <Button
             variant="outline"
-            onClick={() => queryClient.invalidateQueries({ queryKey: ['leads'] })}
+            onClick={() => window.location.reload()}
             className="mt-2"
           >
             Try Again

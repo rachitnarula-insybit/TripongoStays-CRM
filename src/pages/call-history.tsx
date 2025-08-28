@@ -57,55 +57,40 @@ const CallHistoryPage: React.FC = () => {
 
   const pagination = callHistoryResponse?.pagination;
 
-  // Filter and sort call records
+  // Filter and sort call records - FIXED with safety checks
   const filteredAndSortedRecords = useMemo(() => {
     const callRecords = callHistoryResponse?.data || [];
-    let result = filterBySearch(callRecords, searchTerm, ['userName', 'phoneNumber', 'type', 'status', 'result']);
+    // Ensure callRecords is an array
+    const safeCallRecords = Array.isArray(callRecords) ? callRecords : [];
+    
+    let result = filterBySearch(safeCallRecords, searchTerm, ['userName', 'phoneNumber', 'type', 'status', 'result']);
     
     if (sortKey) {
-  const dir = sortDirection === 'asc' ? 1 : -1;
+      const dir = sortDirection === 'asc' ? 1 : -1;
 
-  result = result.sort((a, b) => {
-    const aValue = a[sortKey as keyof CallRecord];
-    const bValue = b[sortKey as keyof CallRecord];
+      result = result.sort((a, b) => {
+        const aValue = a[sortKey as keyof CallRecord];
+        const bValue = b[sortKey as keyof CallRecord];
 
-    // Handle undefined/null first (put undefined at the end for asc)
-    if (aValue == null && bValue == null) return 0;
-    if (aValue == null) return 1 * dir;   // undefined comes last in asc
-    if (bValue == null) return -1 * dir;
+        // Handle undefined/null first (put undefined at the end for asc)
+        if (aValue == null && bValue == null) return 0;
+        if (aValue == null) return 1 * dir;   // undefined comes last in asc
+        if (bValue == null) return -1 * dir;
 
-    // Strings
-    if (typeof aValue === 'string' && typeof bValue === 'string') {
-      return aValue.localeCompare(bValue) * dir;
+        // Strings
+        if (typeof aValue === 'string' && typeof bValue === 'string') {
+          return aValue.localeCompare(bValue) * dir;
+        }
+
+        // Numbers
+        if (typeof aValue === 'number' && typeof bValue === 'number') {
+          return (aValue - bValue) * dir;
+        }
+
+        // Fallback
+        return String(aValue).localeCompare(String(bValue)) * dir;
+      });
     }
-
-    // Dates (compare if both values are valid date strings)
-    if (
-      typeof aValue === 'string' &&
-      typeof bValue === 'string' &&
-      !isNaN(Date.parse(aValue)) &&
-      !isNaN(Date.parse(bValue))
-    ) {
-      return (new Date(aValue).getTime() - new Date(bValue).getTime()) * dir;
-    }
-
-    // Booleans (false < true)
-    if (typeof aValue === 'boolean' && typeof bValue === 'boolean') {
-      return (Number(aValue) - Number(bValue)) * dir;
-    }
-
-    // Numbers (or anything coercible to number)
-    const an = Number(aValue as unknown);
-    const bn = Number(bValue as unknown);
-    if (!Number.isNaN(an) && !Number.isNaN(bn)) {
-      return (an < bn ? -1 : an > bn ? 1 : 0) * dir;
-    }
-
-    // Fallback to string comparison
-    return String(aValue).localeCompare(String(bValue)) * dir;
-  });
-}
-
     
     return result;
   }, [callHistoryResponse?.data, searchTerm, sortKey, sortDirection]);

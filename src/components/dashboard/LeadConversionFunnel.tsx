@@ -34,6 +34,9 @@ const LeadConversionFunnel: React.FC<LeadConversionFunnelProps> = ({
     );
   }
 
+  // Ensure data is an array and handle null/undefined cases
+  const safeData = Array.isArray(data) ? data : [];
+
   return (
     <Card>
       <CardHeader>
@@ -41,42 +44,50 @@ const LeadConversionFunnel: React.FC<LeadConversionFunnelProps> = ({
       </CardHeader>
       <CardContent>
         <div className="space-y-4">
-          {data.map((stage, index) => (
-            <div key={index}>
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-sm font-medium text-neutral-black">
-                  {stage.stage}
-                </span>
-                <div className="flex items-center space-x-2">
-                  <span className="text-sm text-neutral-gray">
-                    {stage.count}
-                  </span>
+          {safeData.length > 0 ? (
+            safeData.map((stage, index) => (
+              <div key={index}>
+                <div className="flex items-center justify-between mb-2">
                   <span className="text-sm font-medium text-neutral-black">
-                    {stage.percentage}%
+                    {stage.stage}
                   </span>
+                  <div className="flex items-center space-x-2">
+                    <span className="text-sm text-neutral-gray">
+                      {stage.count}
+                    </span>
+                    <span className="text-sm font-medium text-neutral-black">
+                      {stage.percentage}%
+                    </span>
+                  </div>
+                </div>
+                <div className="w-full bg-neutral-border-gray rounded-full h-3">
+                  <div
+                    className="h-3 rounded-full transition-all duration-500 ease-out"
+                    style={{
+                      width: `${stage.percentage}%`,
+                      backgroundColor: stage.color,
+                    }}
+                  ></div>
                 </div>
               </div>
-              <div className="w-full bg-neutral-border-gray rounded-full h-3">
-                <div
-                  className="h-3 rounded-full transition-all duration-500 ease-out"
-                  style={{
-                    width: `${stage.percentage}%`,
-                    backgroundColor: stage.color,
-                  }}
-                ></div>
-              </div>
+            ))
+          ) : (
+            <div className="text-center py-8 text-neutral-gray">
+              <p>No conversion data available</p>
             </div>
-          ))}
+          )}
         </div>
         
-        <div className="mt-6 p-4 bg-neutral-light-gray rounded-lg">
-          <div className="flex items-center justify-between text-sm">
-            <span className="text-neutral-gray">Conversion Rate:</span>
-            <span className="font-medium text-secondary-green">
-              {data.length > 0 ? Math.round((data[data.length - 1].count / data[0].count) * 100) : 0}%
-            </span>
+        {safeData.length > 0 && (
+          <div className="mt-6 p-4 bg-neutral-light-gray rounded-lg">
+            <div className="flex items-center justify-between text-sm">
+              <span className="text-neutral-gray">Conversion Rate:</span>
+              <span className="font-medium text-secondary-green">
+                {Math.round((safeData[safeData.length - 1].count / safeData[0].count) * 100)}%
+              </span>
+            </div>
           </div>
-        </div>
+        )}
       </CardContent>
     </Card>
   );

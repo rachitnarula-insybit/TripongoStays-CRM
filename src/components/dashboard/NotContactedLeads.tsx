@@ -53,8 +53,11 @@ const NotContactedLeads: React.FC<NotContactedLeadsProps> = ({ leads, isLoading 
     );
   }
 
+  // Ensure leads is an array and handle null/undefined cases
+  const safeLeads = Array.isArray(leads) ? leads : [];
+  
   // Filter leads that haven't been contacted or are new
-  const notContactedLeads = leads.filter(lead => 
+  const notContactedLeads = safeLeads.filter(lead => 
     lead.status === 'New' || !lead.lastContactDate
   ).slice(0, 5);
 

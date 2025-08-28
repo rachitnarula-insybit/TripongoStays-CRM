@@ -43,63 +43,63 @@ const BookingsPage: React.FC = () => {
 
   const pagination = bookingsResponse?.pagination;
 
-  // Filter and sort bookings
-const filteredAndSortedBookings = useMemo(() => {
-  // Ensure bookings is an array
-  const bookings = bookingsResponse?.data || [];
-  const bookingsArray = Array.isArray(bookings) ? bookings : [];
-  
-  let result = filterBySearch(bookingsArray, searchTerm, [
-    'guestName', 
-    'guestEmail', 
-    'propertyName', 
-    'bookingReference',
-    'status',
-    'paymentStatus'
-  ]);
-  
-  if (sortKey) {
-    result = result.sort((a, b) => {
-      const aValue = a[sortKey as keyof Booking];
-      const bValue = b[sortKey as keyof Booking];
-      
-      // Handle null/undefined values
-      if (aValue === null || aValue === undefined) return sortDirection === 'asc' ? 1 : -1;
-      if (bValue === null || bValue === undefined) return sortDirection === 'asc' ? -1 : 1;
-      
-      // Handle different types of values
-      if (typeof aValue === 'string' && typeof bValue === 'string') {
-        return sortDirection === 'asc' 
-          ? aValue.localeCompare(bValue)
-          : bValue.localeCompare(aValue);
-      }
-      
-      if (typeof aValue === 'number' && typeof bValue === 'number') {
-        return sortDirection === 'asc' 
-          ? aValue - bValue
-          : bValue - aValue;
-      }
-      
-      // For dates (assuming ISO strings for dates)
-      if (sortKey === 'checkInDate' || sortKey === 'checkOutDate' || sortKey === 'createdDate') {
-        const dateA = new Date(String(aValue)).getTime();
-        const dateB = new Date(String(bValue)).getTime();
+  // Filter and sort bookings - FIXED with safety checks
+  const filteredAndSortedBookings = useMemo(() => {
+    // Ensure bookings is an array
+    const bookings = bookingsResponse?.data || [];
+    const bookingsArray = Array.isArray(bookings) ? bookings : [];
+    
+    let result = filterBySearch(bookingsArray, searchTerm, [
+      'guestName', 
+      'guestEmail', 
+      'propertyName', 
+      'bookingReference',
+      'status',
+      'paymentStatus'
+    ]);
+    
+    if (sortKey) {
+      result = result.sort((a, b) => {
+        const aValue = a[sortKey as keyof Booking];
+        const bValue = b[sortKey as keyof Booking];
+        
+        // Handle null/undefined values
+        if (aValue === null || aValue === undefined) return sortDirection === 'asc' ? 1 : -1;
+        if (bValue === null || bValue === undefined) return sortDirection === 'asc' ? -1 : 1;
+        
+        // Handle different types of values
+        if (typeof aValue === 'string' && typeof bValue === 'string') {
+          return sortDirection === 'asc' 
+            ? aValue.localeCompare(bValue)
+            : bValue.localeCompare(aValue);
+        }
+        
+        if (typeof aValue === 'number' && typeof bValue === 'number') {
+          return sortDirection === 'asc' 
+            ? aValue - bValue
+            : bValue - aValue;
+        }
+        
+        // For dates (assuming ISO strings for dates)
+        if (sortKey === 'createdDate') {
+          const dateA = new Date(String(aValue)).getTime();
+          const dateB = new Date(String(bValue)).getTime();
+          return sortDirection === 'asc'
+            ? dateA - dateB
+            : dateB - dateA;
+        }
+        
+        // Fallback for other types
+        const compareA = String(aValue);
+        const compareB = String(bValue);
         return sortDirection === 'asc'
-          ? dateA - dateB
-          : dateB - dateA;
-      }
-      
-      // Fallback for other types
-      const compareA = String(aValue);
-      const compareB = String(bValue);
-      return sortDirection === 'asc'
-        ? compareA.localeCompare(compareB)
-        : compareB.localeCompare(compareA);
-    });
-  }
-  
-  return result;
-}, [bookingsResponse?.data, searchTerm, sortKey, sortDirection]);
+          ? compareA.localeCompare(compareB)
+          : compareB.localeCompare(compareA);
+      });
+    }
+    
+    return result;
+  }, [bookingsResponse?.data, searchTerm, sortKey, sortDirection]);
 
   const debouncedSearch = debounce((value: string) => {
     setSearchTerm(value);

@@ -81,10 +81,13 @@ const UsersPage: React.FC = () => {
 
   const pagination = usersResponse?.pagination;
 
-  // Filter and sort users
+  // Filter and sort users - FIXED with safety checks
   const filteredAndSortedUsers = useMemo(() => {
     const users = usersResponse?.data || [];
-    let result = filterBySearch(users, searchTerm, ['name', 'email', 'phone', 'role']);
+    // Ensure users is an array
+    const safeUsers = Array.isArray(users) ? users : [];
+    
+    let result = filterBySearch(safeUsers, searchTerm, ['name', 'email', 'phone', 'role']);
     
     if (sortKey) {
       result = result.sort((a, b) => {
@@ -110,9 +113,9 @@ const UsersPage: React.FC = () => {
         
         // Handle boolean values
         if (typeof aValue === 'boolean' && typeof bValue === 'boolean') {
-          return sortDirection === 'asc'
-            ? Number(aValue) - Number(bValue)
-            : Number(bValue) - Number(aValue);
+          return sortDirection === 'asc' 
+            ? (aValue === bValue ? 0 : aValue ? 1 : -1)
+            : (aValue === bValue ? 0 : aValue ? -1 : 1);
         }
         
         // For dates (assuming ISO strings for dates)
