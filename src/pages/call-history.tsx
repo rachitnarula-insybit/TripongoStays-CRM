@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { useQuery, useMutation } from '@tanstack/react-query';
-import { Search, Download, Filter, X } from 'lucide-react';
+import { useRouter } from 'next/router';
+import { Search, Download, Filter, X, Eye } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { callHistoryApi } from '@/services/api';
 import Button from '@/components/ui/Button';
@@ -21,6 +22,7 @@ import {
 } from '@/utils';
 
 const CallHistoryPage: React.FC = () => {
+  const router = useRouter();
   const [currentPage, setCurrentPage] = useState(1);
   const [searchTerm, setSearchTerm] = useState('');
   const [sortKey, setSortKey] = useState<string>('date');
@@ -138,6 +140,10 @@ const CallHistoryPage: React.FC = () => {
     exportMutation.mutate();
   };
 
+  const handleViewProfile = (callRecord: CallRecord) => {
+    router.push(`/profile/${encodeURIComponent(callRecord.phoneNumber)}?type=phone`);
+  };
+
   const hasActiveFilters = 
     (filters.type && filters.type.length > 0) ||
     (filters.status && filters.status.length > 0) ||
@@ -164,9 +170,20 @@ const CallHistoryPage: React.FC = () => {
       label: 'User',
       sortable: true,
       render: (value, record) => (
-        <div>
-          <div className="font-medium text-neutral-black">{value}</div>
-          <div className="text-sm text-neutral-gray">{record.phoneNumber}</div>
+        <div className="flex items-center gap-2">
+          <div>
+            <div className="font-medium text-neutral-black">{value}</div>
+            <div className="text-sm text-neutral-gray">{record.phoneNumber}</div>
+          </div>
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => handleViewProfile(record)}
+            leftIcon={<Eye className="h-3 w-3" />}
+            className="text-gray-600 border-gray-300 hover:bg-gray-50 ml-2"
+          >
+            Profile
+          </Button>
         </div>
       ),
     },

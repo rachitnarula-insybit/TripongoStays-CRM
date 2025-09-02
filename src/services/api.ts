@@ -11,7 +11,10 @@ import {
   ApiResponse,
   LeadFilters,
   CallHistoryFilters,
-  BookingFilters
+  BookingFilters,
+  UserProfile,
+  ProfileActivity,
+  ProfileFilters
 } from '@/types';
 import {
   mockUsers,
@@ -720,6 +723,7 @@ function transformCallAnalysisToCallRecords(apiResponse: any): CallRecord[] {
     const metadata = otherDetails.metadata || {};
     const phoneCall = metadata.metadata?.phone_call || {};
     const supportQuality = call.Other_Details_LLM?.support_quality || {};
+    const resultAction = call.Other_Details_LLM?.result_action || {};
     const dynamicVariables = metadata.conversation_initiation_client_data?.dynamic_variables || {};
     
     // Parse date from system__time_utc (ISO format)
@@ -756,22 +760,9 @@ function transformCallAnalysisToCallRecords(apiResponse: any): CallRecord[] {
         status = 'Connected';
     }
     
-    // Determine result from resolution_status
-    const resolutionStatus = supportQuality.resolution_status || 'resolved';
-    let result: CallRecord['result'];
-    switch (resolutionStatus) {
-      case 'resolved':
-        result = 'Booked';
-        break;
-      case 'pending':
-        result = 'Follow-up';
-        break;
-      case 'unresolved':
-        result = 'Not Interested';
-        break;
-      default:
-        result = 'Follow-up';
-    }
+    // Get result from action_required array - join multiple actions with comma if needed
+    const actionRequired = resultAction.action_required || [];
+    const result = actionRequired.length > 0 ? actionRequired.join(', ') : 'No Action';
     
     // Get duration in seconds from dynamic_variables
     const durationSecs = dynamicVariables.system__call_duration_secs || metadata.metadata?.call_duration_secs || 0;
@@ -954,5 +945,475 @@ export const propertiesApi = {
     return apiCall<null>(`/property/deleteproperty/${id}`, {
       method: 'DELETE',
     });
+  },
+};
+
+// -----------------------------
+// Profile API - Centralized User Profile System
+// -----------------------------
+export const profileApi = {
+  // Get unified profile by identifier (phone/email/id)
+  getProfile: async (identifier: string, type: 'phone' | 'email' | 'id' = 'id'): Promise<ApiResponse<UserProfile>> => {
+    try {
+      // Fetch data from all sources in parallel
+      const [leadsResponse, callHistoryResponse, bookingsResponse] = await Promise.all([
+        leadsApi.getLeads(1, 1000), // Get all leads
+        callHistoryApi.getCallHistory(1, 1000), // Get all call history
+        bookingsApi.getBookings(1, 1000), // Get all bookings
+      ]);
+
+      const leads = leadsResponse.data || [];
+      const callHistory = callHistoryResponse.data || [];
+      const bookings = bookingsResponse.data || [];
+
+      // Find the user across all data sources
+      let profileData: Partial<UserProfile> = {};
+      let userCalls: CallRecord[] = [];
+      let userBookings: Booking[] = [];
+      let leadData: Lead | undefined;
+      let source: UserProfile['source'] = 'Contact';
+
+      // Search in leads first
+      if (type === 'phone') {
+        leadData = leads.find(lead => lead.phone === identifier);
+      } else if (type === 'email') {
+        leadData = leads.find(lead => lead.email === identifier);
+      } else {
+        leadData = leads.find(lead => lead.id === identifier);
+      }
+
+      if (leadData) {
+        source = 'Lead';
+        profileData = {
+          id: leadData.id,
+          name: leadData.name,
+          email: leadData.email,
+          phone: leadData.phone,
+          createdDate: leadData.createdDate,
+          lastInteraction: leadData.lastContactDate,
+        };
+
+        // Find related calls by phone
+        userCalls = callHistory.filter(call => call.phoneNumber === leadData!.phone);
+        // Find related bookings by email or phone
+        userBookings = bookings.filter(booking => 
+          booking.guestEmail === leadData!.email || booking.guestPhone === leadData!.phone
+        );
+      } else {
+        // Search in call history
+        const callRecord = callHistory.find(call => {
+          if (type === 'phone') return call.phoneNumber === identifier;
+          if (type === 'email') return false; // Call records don't have email
+          return call.id === identifier;
+        });
+
+        if (callRecord) {
+          source = 'Call History';
+          profileData = {
+            id: callRecord.id,
+            name: callRecord.userName,
+            email: '', // Not available in call records
+            phone: callRecord.phoneNumber,
+            createdDate: callRecord.date,
+            lastInteraction: callRecord.date,
+          };
+          userCalls = [callRecord];
+          userBookings = bookings.filter(booking => booking.guestPhone === callRecord.phoneNumber);
+        } else {
+          // Search in bookings
+          const booking = bookings.find(booking => {
+            if (type === 'phone') return booking.guestPhone === identifier;
+            if (type === 'email') return booking.guestEmail === identifier;
+            return booking.id === identifier;
+          });
+
+          if (booking) {
+            source = 'Booking';
+            profileData = {
+              id: booking.id,
+              name: booking.guestName,
+              email: booking.guestEmail,
+              phone: booking.guestPhone,
+              createdDate: booking.createdDate,
+              lastInteraction: booking.createdDate,
+            };
+            userBookings = [booking];
+            userCalls = callHistory.filter(call => 
+              call.phoneNumber === booking.guestPhone
+            );
+          }
+        }
+      }
+
+      if (!profileData.id) {
+        return {
+          data: {} as UserProfile,
+          success: false,
+          message: 'Profile not found',
+        };
+      }
+
+      // Calculate engagement summary
+      const connectedCalls = userCalls.filter(call => call.status === 'Connected');
+      const totalCallDuration = connectedCalls.reduce((sum, call) => sum + call.duration, 0);
+      const totalRevenue = userBookings.reduce((sum, booking) => sum + booking.totalAmount, 0);
+      const lastCallDate = userCalls.length > 0 ? 
+        userCalls.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())[0].date : 
+        undefined;
+
+      // Generate activity timeline
+      const activities: ProfileActivity[] = [];
+      
+      // Add call activities
+      userCalls.forEach(call => {
+        activities.push({
+          id: `call-${call.id}`,
+          type: 'call',
+          title: `${call.type} Call - ${call.status}`,
+          description: call.notes || `${call.result} (${Math.floor(call.duration / 60)}m ${call.duration % 60}s)`,
+          date: call.date,
+          metadata: { callRecord: call },
+          color: call.status === 'Connected' ? '#10B981' : '#EF4444',
+        });
+      });
+
+      // Add booking activities
+      userBookings.forEach(booking => {
+        activities.push({
+          id: `booking-${booking.id}`,
+          type: 'booking',
+          title: `Booking ${booking.status}`,
+          description: `${booking.propertyName} - ${booking.nights} nights`,
+          date: booking.createdDate,
+          metadata: { booking },
+          color: booking.status === 'Confirmed' ? '#10B981' : '#F59E0B',
+        });
+      });
+
+      // Sort activities by date (newest first)
+      activities.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+
+      // Determine status
+      let status: UserProfile['status'] = 'Active';
+      if (leadData) {
+        if (leadData.status === 'Converted') status = 'Converted';
+        else if (leadData.status === 'Lost') status = 'Lost';
+      }
+
+      const profile: UserProfile = {
+        id: profileData.id!,
+        name: profileData.name!,
+        email: profileData.email!,
+        phone: profileData.phone!,
+        source,
+        status,
+        tags: leadData?.priority ? [leadData.priority] : [],
+        notes: leadData?.notes ? [leadData.notes] : [],
+        createdDate: profileData.createdDate!,
+        lastInteraction: profileData.lastInteraction,
+        engagementSummary: {
+          totalCalls: userCalls.length,
+          totalCallDuration,
+          lastCallDate,
+          callsConnected: connectedCalls.length,
+          callsMissed: userCalls.filter(call => call.status === 'Missed').length,
+          totalBookings: userBookings.length,
+          totalRevenue,
+          averageBookingValue: userBookings.length > 0 ? totalRevenue / userBookings.length : 0,
+          conversionRate: leadData && userBookings.length > 0 ? 100 : 0,
+        },
+        activities,
+        leadData,
+        callHistory: userCalls,
+        bookings: userBookings,
+        customAttributes: {},
+      };
+
+      return {
+        data: profile,
+        success: true,
+        message: 'Profile retrieved successfully',
+      };
+    } catch (error: any) {
+      return {
+        data: {} as UserProfile,
+        success: false,
+        message: error?.message || 'Failed to fetch profile',
+      };
+    }
+  },
+
+  // Search profiles across all data sources
+  searchProfiles: async (
+    query: string,
+    page = 1,
+    limit = 10,
+    filters?: ProfileFilters
+  ): Promise<ApiResponse<UserProfile[]>> => {
+    try {
+      // Fetch all data
+      const [leadsResponse, callHistoryResponse, bookingsResponse] = await Promise.all([
+        leadsApi.getLeads(1, 1000),
+        callHistoryApi.getCallHistory(1, 1000),
+        bookingsApi.getBookings(1, 1000),
+      ]);
+
+      const leads = leadsResponse.data || [];
+      const callHistory = callHistoryResponse.data || [];
+      const bookings = bookingsResponse.data || [];
+
+      // Create unified profiles list
+      const profilesMap = new Map<string, UserProfile>();
+
+      // Process leads
+      leads.forEach(lead => {
+        const profile = profileApi.createProfileFromLead(lead, callHistory, bookings);
+        profilesMap.set(profile.phone || profile.email, profile);
+      });
+
+      // Process call records not already in profiles
+      callHistory.forEach(call => {
+        const key = call.phoneNumber;
+        if (!profilesMap.has(key)) {
+          const profile = profileApi.createProfileFromCall(call, callHistory, bookings);
+          profilesMap.set(key, profile);
+        }
+      });
+
+      // Process bookings not already in profiles  
+      bookings.forEach(booking => {
+        const key = booking.guestPhone || booking.guestEmail;
+        if (!profilesMap.has(key)) {
+          const profile = profileApi.createProfileFromBooking(booking, callHistory, bookings);
+          profilesMap.set(key, profile);
+        }
+      });
+
+      let profiles = Array.from(profilesMap.values());
+
+      // Apply search filter
+      if (query) {
+        const searchLower = query.toLowerCase();
+        profiles = profiles.filter(profile =>
+          profile.name.toLowerCase().includes(searchLower) ||
+          profile.email.toLowerCase().includes(searchLower) ||
+          profile.phone.includes(query)
+        );
+      }
+
+      // Apply filters
+      if (filters?.source?.length) {
+        profiles = profiles.filter(profile => filters.source!.includes(profile.source));
+      }
+
+      if (filters?.status?.length) {
+        profiles = profiles.filter(profile => filters.status!.includes(profile.status));
+      }
+
+      // Apply pagination
+      const startIndex = (page - 1) * limit;
+      const endIndex = startIndex + limit;
+      const paginatedProfiles = profiles.slice(startIndex, endIndex);
+
+      return {
+        data: paginatedProfiles,
+        success: true,
+        pagination: {
+          page,
+          limit,
+          total: profiles.length,
+          totalPages: Math.ceil(profiles.length / limit),
+        },
+      };
+    } catch (error: any) {
+      return {
+        data: [],
+        success: false,
+        message: error?.message || 'Failed to search profiles',
+      };
+    }
+  },
+
+  // Helper methods for creating profiles from different sources
+  createProfileFromLead: (
+    lead: Lead,
+    allCalls: CallRecord[],
+    allBookings: Booking[]
+  ): UserProfile => {
+    const userCalls = allCalls.filter(call => call.phoneNumber === lead.phone);
+    const userBookings = allBookings.filter(booking => 
+      booking.guestEmail === lead.email || booking.guestPhone === lead.phone
+    );
+
+    const connectedCalls = userCalls.filter(call => call.status === 'Connected');
+    const totalCallDuration = connectedCalls.reduce((sum, call) => sum + call.duration, 0);
+    const totalRevenue = userBookings.reduce((sum, booking) => sum + booking.totalAmount, 0);
+
+    const activities: ProfileActivity[] = [];
+    
+    // Add activities from calls and bookings
+    userCalls.forEach(call => {
+      activities.push({
+        id: `call-${call.id}`,
+        type: 'call',
+        title: `${call.type} Call - ${call.status}`,
+        description: call.notes || call.result,
+        date: call.date,
+        color: call.status === 'Connected' ? '#10B981' : '#EF4444',
+      });
+    });
+
+    userBookings.forEach(booking => {
+      activities.push({
+        id: `booking-${booking.id}`,
+        type: 'booking',
+        title: `Booking ${booking.status}`,
+        description: `${booking.propertyName} - ${booking.nights} nights`,
+        date: booking.createdDate,
+        color: booking.status === 'Confirmed' ? '#10B981' : '#F59E0B',
+      });
+    });
+
+    activities.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+
+    return {
+      id: lead.id,
+      name: lead.name,
+      email: lead.email,
+      phone: lead.phone,
+      source: 'Lead',
+      status: lead.status === 'Converted' ? 'Converted' : 
+              lead.status === 'Lost' ? 'Lost' : 'Active',
+      tags: [lead.priority],
+      notes: lead.notes ? [lead.notes] : [],
+      createdDate: lead.createdDate,
+      lastInteraction: lead.lastContactDate,
+      engagementSummary: {
+        totalCalls: userCalls.length,
+        totalCallDuration,
+        lastCallDate: userCalls.length > 0 ? userCalls[0].date : undefined,
+        callsConnected: connectedCalls.length,
+        callsMissed: userCalls.filter(call => call.status === 'Missed').length,
+        totalBookings: userBookings.length,
+        totalRevenue,
+        averageBookingValue: userBookings.length > 0 ? totalRevenue / userBookings.length : 0,
+        conversionRate: userBookings.length > 0 ? 100 : 0,
+      },
+      activities,
+      leadData: lead,
+      callHistory: userCalls,
+      bookings: userBookings,
+      customAttributes: {},
+    };
+  },
+
+  createProfileFromCall: (
+    call: CallRecord,
+    allCalls: CallRecord[],
+    allBookings: Booking[]
+  ): UserProfile => {
+    const userCalls = allCalls.filter(c => c.phoneNumber === call.phoneNumber);
+    const userBookings = allBookings.filter(booking => booking.guestPhone === call.phoneNumber);
+
+    const connectedCalls = userCalls.filter(c => c.status === 'Connected');
+    const totalCallDuration = connectedCalls.reduce((sum, c) => sum + c.duration, 0);
+    const totalRevenue = userBookings.reduce((sum, booking) => sum + booking.totalAmount, 0);
+
+    const activities: ProfileActivity[] = userCalls.map(c => ({
+      id: `call-${c.id}`,
+      type: 'call' as const,
+      title: `${c.type} Call - ${c.status}`,
+      description: c.notes || c.result,
+      date: c.date,
+      color: c.status === 'Connected' ? '#10B981' : '#EF4444',
+    }));
+
+    activities.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+
+    return {
+      id: call.id,
+      name: call.userName,
+      email: '',
+      phone: call.phoneNumber,
+      source: 'Call History',
+      status: 'Active',
+      tags: [],
+      notes: call.notes ? [call.notes] : [],
+      createdDate: call.date,
+      lastInteraction: call.date,
+      engagementSummary: {
+        totalCalls: userCalls.length,
+        totalCallDuration,
+        lastCallDate: call.date,
+        callsConnected: connectedCalls.length,
+        callsMissed: userCalls.filter(c => c.status === 'Missed').length,
+        totalBookings: userBookings.length,
+        totalRevenue,
+        averageBookingValue: userBookings.length > 0 ? totalRevenue / userBookings.length : 0,
+        conversionRate: userBookings.length > 0 ? 100 : 0,
+      },
+      activities,
+      callHistory: userCalls,
+      bookings: userBookings,
+      customAttributes: {},
+    };
+  },
+
+  createProfileFromBooking: (
+    booking: Booking,
+    allCalls: CallRecord[],
+    allBookings: Booking[]
+  ): UserProfile => {
+    const userCalls = allCalls.filter(call => call.phoneNumber === booking.guestPhone);
+    const userBookings = allBookings.filter(b => 
+      b.guestEmail === booking.guestEmail || b.guestPhone === booking.guestPhone
+    );
+
+    const connectedCalls = userCalls.filter(call => call.status === 'Connected');
+    const totalCallDuration = connectedCalls.reduce((sum, call) => sum + call.duration, 0);
+    const totalRevenue = userBookings.reduce((sum, b) => sum + b.totalAmount, 0);
+
+    const activities: ProfileActivity[] = [];
+    
+    userBookings.forEach(b => {
+      activities.push({
+        id: `booking-${b.id}`,
+        type: 'booking',
+        title: `Booking ${b.status}`,
+        description: `${b.propertyName} - ${b.nights} nights`,
+        date: b.createdDate,
+        color: b.status === 'Confirmed' ? '#10B981' : '#F59E0B',
+      });
+    });
+
+    activities.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+
+    return {
+      id: booking.id,
+      name: booking.guestName,
+      email: booking.guestEmail,
+      phone: booking.guestPhone,
+      source: 'Booking',
+      status: 'Converted',
+      tags: [],
+      notes: [],
+      createdDate: booking.createdDate,
+      lastInteraction: booking.createdDate,
+      engagementSummary: {
+        totalCalls: userCalls.length,
+        totalCallDuration,
+        lastCallDate: userCalls.length > 0 ? userCalls[0].date : undefined,
+        callsConnected: connectedCalls.length,
+        callsMissed: userCalls.filter(call => call.status === 'Missed').length,
+        totalBookings: userBookings.length,
+        totalRevenue,
+        averageBookingValue: totalRevenue / userBookings.length,
+        conversionRate: 100,
+      },
+      activities,
+      callHistory: userCalls,
+      bookings: userBookings,
+      customAttributes: {},
+    };
   },
 };

@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { Search, Filter, X, FileText, Eye } from 'lucide-react';
+import { useRouter } from 'next/router';
+import { Search, Filter, X, FileText, Eye, UserCircle } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { bookingsApi } from '@/services/api';
 import Button from '@/components/ui/Button';
@@ -21,6 +22,7 @@ import {
 import { generateInvoice } from '@/utils/invoiceGenerator';
 
 const BookingsPage: React.FC = () => {
+  const router = useRouter();
   const [currentPage, setCurrentPage] = useState(1);
   const [searchTerm, setSearchTerm] = useState('');
   const [sortKey, setSortKey] = useState<string>('createdDate');
@@ -138,6 +140,12 @@ const BookingsPage: React.FC = () => {
     setIsDetailsModalOpen(true);
   };
 
+  const handleViewProfile = (booking: Booking) => {
+    const identifier = booking.guestEmail || booking.guestPhone;
+    const type = booking.guestEmail ? 'email' : 'phone';
+    router.push(`/profile/${encodeURIComponent(identifier)}?type=${type}`);
+  };
+
   const handleGenerateInvoice = (booking: Booking) => {
     try {
       generateInvoice(booking);
@@ -237,6 +245,15 @@ const BookingsPage: React.FC = () => {
       label: 'Actions',
       render: (_, booking) => (
         <div className="flex space-x-2">
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => handleViewProfile(booking)}
+            leftIcon={<UserCircle className="h-3 w-3" />}
+            className="text-gray-600 border-gray-300 hover:bg-gray-50"
+          >
+            Profile
+          </Button>
           <Button
             size="sm"
             variant="outline"

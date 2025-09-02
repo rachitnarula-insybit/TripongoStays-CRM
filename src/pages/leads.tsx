@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { Search, Phone, MessageCircle, ChevronDown } from 'lucide-react';
+import { useRouter } from 'next/router';
+import { Search, Phone, MessageCircle, ChevronDown, Eye } from 'lucide-react';
 import { leadsApi } from '@/services/api';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
@@ -22,6 +23,7 @@ import {
 } from '@/utils';
 
 const LeadsPage: React.FC = () => {
+  const router = useRouter();
   const [currentPage, setCurrentPage] = useState(1);
   const [searchTerm, setSearchTerm] = useState('');
   const [sortKey, setSortKey] = useState<string>('');
@@ -154,6 +156,10 @@ const LeadsPage: React.FC = () => {
 
   const handleCall = (lead: Lead) => {
     initiateCall(lead.phone);
+  };
+
+  const handleViewProfile = (lead: Lead) => {
+    router.push(`/profile/${lead.id}?type=id`);
   };
 
   const StatusDropdown: React.FC<{ lead: Lead }> = ({ lead }) => {
@@ -307,6 +313,15 @@ const LeadsPage: React.FC = () => {
       label: 'Actions',
       render: (_, lead) => (
         <div className="flex space-x-2">
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => handleViewProfile(lead)}
+            leftIcon={<Eye className="h-3 w-3" />}
+            className="text-gray-600 border-gray-300 hover:bg-gray-50"
+          >
+            Profile
+          </Button>
           <Button
             size="sm"
             variant="outline"

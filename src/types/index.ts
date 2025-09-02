@@ -43,7 +43,7 @@ export interface CallRecord {
   type: 'Incoming' | 'Outgoing';
   status: 'Connected' | 'Missed' | 'Rejected' | 'Busy';
   duration: number; // in seconds
-  result: 'Booked' | 'Follow-up' | 'Not Interested' | 'No Answer';
+  result: string;
   date: string;
   phoneNumber: string;
   notes?: string;
@@ -200,4 +200,87 @@ export interface ToastOptions {
   title: string;
   description?: string;
   duration?: number;
+}
+
+// Profile Types - Centralized User Profile System
+export interface UserProfile {
+  id: string;
+  name: string;
+  email: string;
+  phone: string;
+  avatar?: string;
+  source: 'Lead' | 'Contact' | 'Call History' | 'Booking';
+  status: 'Active' | 'Inactive' | 'Converted' | 'Lost';
+  tags: string[];
+  notes: string[];
+  
+  // Core Details
+  organization?: string;
+  location?: string;
+  createdDate: string;
+  lastInteraction?: string;
+  
+  // Engagement Summary
+  engagementSummary: {
+    totalCalls: number;
+    totalCallDuration: number; // in seconds
+    lastCallDate?: string;
+    callsConnected: number;
+    callsMissed: number;
+    totalBookings: number;
+    totalRevenue: number;
+    averageBookingValue: number;
+    conversionRate: number;
+  };
+  
+  // Activity Timeline
+  activities: ProfileActivity[];
+  
+  // Related Data
+  leadData?: Lead;
+  callHistory: CallRecord[];
+  bookings: Booking[];
+  
+  // Custom Attributes
+  customAttributes: Record<string, any>;
+}
+
+export interface ProfileActivity {
+  id: string;
+  type: 'call' | 'booking' | 'note' | 'status_change' | 'email' | 'whatsapp';
+  title: string;
+  description?: string;
+  date: string;
+  metadata?: Record<string, any>;
+  icon?: string;
+  color?: string;
+}
+
+export interface ProfileNote {
+  id: string;
+  content: string;
+  createdBy: string;
+  createdDate: string;
+  type: 'general' | 'call' | 'follow_up' | 'important';
+}
+
+export interface ProfileEngagementMetrics {
+  totalInteractions: number;
+  engagementScore: number; // 0-100
+  preferredContactMethod: 'phone' | 'email' | 'whatsapp';
+  bestTimeToContact?: string;
+  responseRate: number;
+  averageResponseTime: number; // in hours
+}
+
+// Profile Filters
+export interface ProfileFilters {
+  source?: string[];
+  status?: string[];
+  tags?: string[];
+  dateRange?: {
+    start: string;
+    end: string;
+  };
+  engagementLevel?: 'high' | 'medium' | 'low'[];
 }

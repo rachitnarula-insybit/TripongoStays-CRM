@@ -12,6 +12,7 @@ import {
   Package,
   LogOut,
   X,
+  UserCircle,
 } from 'lucide-react';
 import { cn } from '@/utils';
 import { useAuth } from '@/contexts/AuthContext';
@@ -27,6 +28,11 @@ const navigationItems = [
     name: 'Dashboard',
     href: '/dashboard',
     icon: LayoutDashboard,
+  },
+  {
+    name: 'User Profiles',
+    href: '/profiles',
+    icon: UserCircle,
   },
   {
     name: 'Users / Contacts',
