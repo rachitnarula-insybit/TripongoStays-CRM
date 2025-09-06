@@ -19,7 +19,7 @@ const CityDemandChart: React.FC<CityDemandChartProps> = ({ data, isLoading }) =>
         <CardContent>
           <div className="h-80 flex items-center justify-center">
             <div className="text-center">
-              <div className="mx-auto h-8 w-8 animate-spin rounded-full border-2 border-primary-orange border-t-transparent"></div>
+              <div className="mx-auto h-8 w-8 animate-spin rounded-full border-2 border-brand-primary-500 border-t-transparent"></div>
               <p className="mt-2 text-sm text-neutral-gray">Loading chart...</p>
             </div>
           </div>
@@ -41,12 +41,12 @@ const CityDemandChart: React.FC<CityDemandChartProps> = ({ data, isLoading }) =>
   }) => {
     if (active && payload && payload.length) {
       return (
-        <div className="bg-white p-3 border border-neutral-border-gray rounded-lg shadow-lg">
-          <p className="font-medium text-neutral-black">{label}</p>
-          <p className="text-primary-orange">
+        <div className="bg-white p-4 border-2 border-blue-200 rounded-lg shadow-xl">
+          <p className="font-black text-blue-900 text-lg uppercase tracking-wide">{label}</p>
+          <p className="text-blue-700 font-bold text-lg">
             Bookings: {payload[0].value}
           </p>
-          <p className="text-secondary-green">
+          <p className="text-blue-800 font-bold text-lg">
             Revenue: {formatCurrency(payload[0].payload.revenue)}
           </p>
         </div>
@@ -58,7 +58,7 @@ const CityDemandChart: React.FC<CityDemandChartProps> = ({ data, isLoading }) =>
   return (
     <Card>
       <CardHeader>
-        <CardTitle>City-wise Demand</CardTitle>
+        <CardTitle className="text-xl font-black text-blue-900 uppercase tracking-wide">City-wise Demand</CardTitle>
       </CardHeader>
       <CardContent>
         {safeData.length > 0 ? (
@@ -74,6 +74,12 @@ const CityDemandChart: React.FC<CityDemandChartProps> = ({ data, isLoading }) =>
                     bottom: 5,
                   }}
                 >
+                  <defs>
+                    <linearGradient id="blueGradient" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="#0EA5E9" />
+                      <stop offset="100%" stopColor="#38BDF8" />
+                    </linearGradient>
+                  </defs>
                   <CartesianGrid strokeDasharray="3 3" stroke="#E0E0E0" />
                   <XAxis 
                     dataKey="city" 
@@ -87,7 +93,7 @@ const CityDemandChart: React.FC<CityDemandChartProps> = ({ data, isLoading }) =>
                   <Tooltip content={<CustomTooltip />} />
                   <Bar 
                     dataKey="bookings" 
-                    fill="#EC6B2F" 
+                    fill="url(#blueGradient)" 
                     radius={[4, 4, 0, 0]}
                     className="hover:opacity-80 transition-opacity"
                   />
@@ -96,15 +102,15 @@ const CityDemandChart: React.FC<CityDemandChartProps> = ({ data, isLoading }) =>
             </div>
             
             <div className="mt-4 grid grid-cols-2 gap-4">
-              <div className="text-center p-3 bg-neutral-light-gray rounded-lg">
-                <p className="text-sm text-neutral-gray">Top City</p>
-                <p className="font-medium text-neutral-black">
+              <div className="text-center p-4 bg-blue-50 rounded-lg border border-blue-200">
+                <p className="text-sm font-bold text-blue-800 uppercase tracking-wide">Top City</p>
+                <p className="font-black text-xl text-blue-900">
                   {safeData[0].city}
                 </p>
               </div>
-              <div className="text-center p-3 bg-neutral-light-gray rounded-lg">
-                <p className="text-sm text-neutral-gray">Total Revenue</p>
-                <p className="font-medium text-neutral-black">
+              <div className="text-center p-4 bg-blue-100 rounded-lg border border-blue-300">
+                <p className="text-sm font-bold text-blue-800 uppercase tracking-wide">Total Revenue</p>
+                <p className="font-black text-xl text-blue-900">
                   {formatCurrency(safeData.reduce((sum, city) => sum + city.revenue, 0))}
                 </p>
               </div>

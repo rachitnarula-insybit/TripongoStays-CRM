@@ -15,13 +15,26 @@ const LeadFiltersComponent: React.FC<LeadFiltersProps> = ({
   onFiltersChange,
   onClearFilters,
 }) => {
-  const sourceOptions = ['Web', 'WhatsApp', 'Call', 'Social', 'Referral'];
-  const statusOptions = ['New', 'Hot', 'Follow-up', 'Converted', 'Lost'];
+  const sourceOptions = [
+    { value: 'Web', label: 'Website' },
+    { value: 'WhatsApp', label: 'WhatsApp' },
+    { value: 'Call', label: 'Phone Call' },
+    { value: 'Social', label: 'Social Media' },
+    { value: 'Referral', label: 'Referral' },
+  ];
+  
+  const statusOptions = [
+    { value: 'New', label: 'New Lead' },
+    { value: 'Hot', label: 'Hot Lead' },
+    { value: 'Follow-up', label: 'Follow-up' },
+    { value: 'Converted', label: 'Converted' },
+    { value: 'Lost', label: 'Lost' },
+  ];
+  
   const assignmentOptions = [
     { value: 'unassigned', label: 'Unassigned' },
-    { value: '2', label: 'Priya Sharma' },
-    { value: '3', label: 'Rahul Kumar' },
-    { value: '4', label: 'Sneha Patel' },
+    { value: 'ai', label: 'Voice Agent (AI)' },
+    { value: 'human', label: 'Human Agent' },
   ];
 
   const handleSourceChange = (source: string) => {
@@ -66,15 +79,17 @@ const LeadFiltersComponent: React.FC<LeadFiltersProps> = ({
     (filters.assignedTo && filters.assignedTo.length > 0);
 
   return (
-    <Card>
-      <CardHeader className="flex flex-row items-center justify-between">
-        <CardTitle className="flex items-center space-x-2">
-          <Filter className="h-5 w-5" />
-          <span>Filters</span>
+    <Card className="border-0 shadow-md bg-gradient-to-br from-white to-gray-50/50">
+      <CardHeader className="flex flex-row items-center justify-between pb-4">
+        <CardTitle className="flex items-center space-x-2 text-gray-800">
+          <div className="p-1.5 bg-blue-100 rounded-lg">
+            <Filter className="h-4 w-4 text-blue-600" />
+          </div>
+          <span className="text-lg font-semibold">Smart Filters</span>
         </CardTitle>
         {hasActiveFilters && (
           <Button
-            variant="outline"
+            variant="secondary"
             size="sm"
             onClick={onClearFilters}
             leftIcon={<X className="h-4 w-4" />}
@@ -87,17 +102,22 @@ const LeadFiltersComponent: React.FC<LeadFiltersProps> = ({
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {/* Source Filter */}
           <div>
-            <h4 className="text-sm font-medium text-neutral-black mb-3">Source</h4>
+            <h4 className="text-sm font-medium text-neutral-black mb-3 flex items-center">
+              <span>Lead Source</span>
+            </h4>
             <div className="space-y-2">
               {sourceOptions.map((source) => (
-                <label key={source} className="flex items-center space-x-2">
+                <label 
+                  key={source.value} 
+                  className="flex items-center space-x-3 p-2 rounded-lg hover:bg-gray-50 cursor-pointer transition-colors"
+                >
                   <input
                     type="checkbox"
-                    checked={filters.source?.includes(source) || false}
-                    onChange={() => handleSourceChange(source)}
-                    className="rounded border-neutral-border-gray text-primary-orange focus:ring-primary-orange"
+                    checked={filters.source?.includes(source.value) || false}
+                    onChange={() => handleSourceChange(source.value)}
+                    className="rounded border-gray-300 text-blue-600 focus:ring-2 focus:ring-blue-500"
                   />
-                  <span className="text-sm text-neutral-gray">{source}</span>
+                  <span className="text-sm text-gray-700 font-medium">{source.label}</span>
                 </label>
               ))}
             </div>
@@ -105,17 +125,22 @@ const LeadFiltersComponent: React.FC<LeadFiltersProps> = ({
 
           {/* Status Filter */}
           <div>
-            <h4 className="text-sm font-medium text-neutral-black mb-3">Status</h4>
+            <h4 className="text-sm font-medium text-neutral-black mb-3 flex items-center">
+              <span>Lead Status</span>
+            </h4>
             <div className="space-y-2">
               {statusOptions.map((status) => (
-                <label key={status} className="flex items-center space-x-2">
+                <label 
+                  key={status.value} 
+                  className="flex items-center space-x-3 p-2 rounded-lg hover:bg-gray-50 cursor-pointer transition-colors"
+                >
                   <input
                     type="checkbox"
-                    checked={filters.status?.includes(status) || false}
-                    onChange={() => handleStatusChange(status)}
-                    className="rounded border-neutral-border-gray text-primary-orange focus:ring-primary-orange"
+                    checked={filters.status?.includes(status.value) || false}
+                    onChange={() => handleStatusChange(status.value)}
+                    className="rounded border-gray-300 text-blue-600 focus:ring-2 focus:ring-blue-500"
                   />
-                  <span className="text-sm text-neutral-gray">{status}</span>
+                  <span className="text-sm text-gray-700 font-medium">{status.label}</span>
                 </label>
               ))}
             </div>
@@ -123,17 +148,22 @@ const LeadFiltersComponent: React.FC<LeadFiltersProps> = ({
 
           {/* Assignment Filter */}
           <div>
-            <h4 className="text-sm font-medium text-neutral-black mb-3">Assigned To</h4>
+            <h4 className="text-sm font-medium text-neutral-black mb-3 flex items-center">
+              <span>Agent Type</span>
+            </h4>
             <div className="space-y-2">
               {assignmentOptions.map((option) => (
-                <label key={option.value} className="flex items-center space-x-2">
+                <label 
+                  key={option.value} 
+                  className="flex items-center space-x-3 p-2 rounded-lg hover:bg-gray-50 cursor-pointer transition-colors"
+                >
                   <input
                     type="checkbox"
                     checked={filters.assignedTo?.includes(option.value) || false}
                     onChange={() => handleAssignmentChange(option.value)}
-                    className="rounded border-neutral-border-gray text-primary-orange focus:ring-primary-orange"
+                    className="rounded border-gray-300 text-blue-600 focus:ring-2 focus:ring-blue-500"
                   />
-                  <span className="text-sm text-neutral-gray">{option.label}</span>
+                  <span className="text-sm text-gray-700 font-medium">{option.label}</span>
                 </label>
               ))}
             </div>

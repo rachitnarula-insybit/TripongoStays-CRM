@@ -434,11 +434,11 @@ export const dashboardApi = {
     try {
       // For now, return mock data since this endpoint might not exist
       const mockData: LeadConversionData[] = [
-        { stage: 'New Leads', count: 25, percentage: 100, color: '#EC6B2F' },
-        { stage: 'Contacted', count: 18, percentage: 72, color: '#F7B731' },
-        { stage: 'Qualified', count: 12, percentage: 48, color: '#4ECDC4' },
-        { stage: 'Proposal', count: 8, percentage: 32, color: '#45B7D1' },
-        { stage: 'Converted', count: 5, percentage: 20, color: '#96CEB4' },
+        { stage: 'New Leads', count: 25, percentage: 100, color: '#1e3a8a' },
+        { stage: 'Contacted', count: 18, percentage: 72, color: '#1e40af' },
+        { stage: 'Qualified', count: 12, percentage: 48, color: '#1d4ed8' },
+        { stage: 'Proposal', count: 8, percentage: 32, color: '#2563eb' },
+        { stage: 'Converted', count: 5, percentage: 20, color: '#3b82f6' },
       ];
       
       return {
@@ -790,7 +790,12 @@ function transformCallAnalysisToCallRecords(apiResponse: any): CallRecord[] {
     return transformedRecord;
   });
   
-  return transformedRecords;
+  // Sort by date in descending order (newest first)
+  return transformedRecords.sort((a: CallRecord, b: CallRecord) => {
+    const dateA = new Date(a.date).getTime();
+    const dateB = new Date(b.date).getTime();
+    return dateB - dateA; // Descending order (newest first)
+  });
 }
 
 // -----------------------------
@@ -867,7 +872,7 @@ export const propertiesApi = {
   getProperties: async (): Promise<ApiResponse<Property[]>> => {
     try {
       // Try the real endpoint first
-      const response = await apiCall<Property[]>('/property/getproperties');
+      const response = await apiCall<Property[]>('/property/getallproperties');
       
       // If it fails, return mock data for now
       if (!response.success) {

@@ -1,8 +1,11 @@
 import React from 'react';
-import { TrendingUp, TrendingDown } from 'lucide-react';
+import { motion } from 'framer-motion';
+import { Brain } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/Card';
 import { formatCurrency, formatNumber } from '@/utils';
 import { DashboardStats } from '@/types';
+import { useReducedMotion, createMotionVariants } from '@/utils/motion';
+import { cn } from '@/utils';
 
 interface StatsCardsProps {
   stats: DashboardStats;
@@ -10,96 +13,158 @@ interface StatsCardsProps {
 }
 
 const StatsCards: React.FC<StatsCardsProps> = ({ stats, isLoading }) => {
+  const reducedMotion = useReducedMotion();
+  const motionVariants = createMotionVariants(reducedMotion);
+  
   const statsData = [
     {
       title: 'Total Bookings',
       value: stats.totalBookings,
-      growth: stats.bookingsGrowth,
       format: formatNumber,
-      color: 'text-secondary-blue',
+      color: 'text-blue-700',
       bgColor: 'bg-blue-50',
+      iconColor: 'bg-blue-600',
     },
     {
       title: 'Total Properties',
       value: stats.totalProperties,
-      growth: stats.propertiesGrowth,
       format: formatNumber,
-      color: 'text-secondary-green',
-      bgColor: 'bg-green-50',
+      color: 'text-blue-800',
+      bgColor: 'bg-blue-100',
+      iconColor: 'bg-blue-700',
     },
     {
       title: 'Total Leads',
       value: stats.totalLeads,
-      growth: stats.leadsGrowth,
       format: formatNumber,
-      color: 'text-primary-orange',
-      bgColor: 'bg-orange-50',
+      color: 'text-blue-900',
+      bgColor: 'bg-blue-200',
+      iconColor: 'bg-blue-800',
     },
     {
       title: 'Revenue',
       value: stats.revenue,
-      growth: stats.revenueGrowth,
       format: formatCurrency,
-      color: 'text-secondary-green',
-      bgColor: 'bg-green-50',
+      color: 'text-blue-800',
+      bgColor: 'bg-blue-150',
+      iconColor: 'bg-blue-700',
     },
   ];
 
   if (isLoading) {
     return (
-      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
+      <motion.div 
+        className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4"
+        variants={motionVariants.cardContainer}
+        initial="hidden"
+        animate="visible"
+      >
         {[...Array(4)].map((_, index) => (
-          <Card key={index} className="animate-pulse">
-            <CardContent className="p-6">
-              <div className="h-4 bg-gray-200 rounded mb-2"></div>
-              <div className="h-8 bg-gray-200 rounded mb-2"></div>
-              <div className="h-4 bg-gray-200 rounded w-20"></div>
-            </CardContent>
-          </Card>
+          <motion.div
+            key={index}
+            variants={motionVariants.card}
+            style={reducedMotion ? {} : { willChange: 'transform, opacity' }}
+          >
+            <Card className="animate-pulse">
+              <CardContent className="p-6">
+                <div className="h-4 bg-gray-200 rounded mb-2"></div>
+                <div className="h-8 bg-gray-200 rounded mb-2"></div>
+                <div className="h-4 bg-gray-200 rounded w-20"></div>
+              </CardContent>
+            </Card>
+          </motion.div>
         ))}
-      </div>
+      </motion.div>
     );
   }
 
   return (
-    <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
+    <motion.div 
+      className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4"
+      variants={motionVariants.cardContainer}
+      initial="hidden"
+      animate="visible"
+    >
       {statsData.map((stat, index) => (
-        <Card key={index} className="hover:shadow-md transition-shadow">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-neutral-gray">
-                  {stat.title}
-                </p>
-                <p className={`text-2xl font-bold ${stat.color} mt-1`}>
-                  {stat.format(stat.value)}
-                </p>
-                <div className="flex items-center mt-2">
-                  {stat.growth > 0 ? (
-                    <TrendingUp className="h-4 w-4 text-secondary-green mr-1" />
-                  ) : (
-                    <TrendingDown className="h-4 w-4 text-secondary-red mr-1" />
-                  )}
-                  <span
-                    className={`text-sm font-medium ${
-                      stat.growth > 0 ? 'text-secondary-green' : 'text-secondary-red'
-                    }`}
-                  >
-                    {stat.growth > 0 ? '+' : ''}{stat.growth}%
-                  </span>
-                  <span className="text-sm text-neutral-gray ml-1">
-                    vs last month
-                  </span>
-                </div>
-              </div>
-              <div className={`p-3 rounded-full ${stat.bgColor}`}>
-                <div className={`h-6 w-6 rounded ${stat.color.replace('text-', 'bg-')}`}></div>
+        <motion.div
+          key={index}
+          variants={motionVariants.card}
+          whileHover="hover"
+          style={reducedMotion ? {} : { willChange: 'transform, opacity' }}
+          onAnimationComplete={() => {
+            // Remove will-change after animation for performance
+            if (!reducedMotion) {
+              const element = document.querySelector(`[data-card-index="${index}"]`);
+              if (element instanceof HTMLElement) {
+                element.style.willChange = 'auto';
+              }
+            }
+          }}
+        >
+          <Card 
+            className={cn(
+              "hover:shadow-md transition-all duration-300 cursor-pointer group relative overflow-hidden",
+              "border-l-2 border-l-transparent hover:border-l-brand-accent/30"
+            )}
+            data-card-index={index}
+          >
+            {/* AI Prediction Indicator */}
+            <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+              <div className="flex items-center gap-1 px-2 py-1 bg-brand-accent/5 rounded-full">
+                <Brain className="h-3 w-3 text-brand-accent" />
+                <div className="w-1 h-1 bg-brand-accent rounded-full animate-pulse" />
               </div>
             </div>
-          </CardContent>
-        </Card>
+            
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <motion.p 
+                    className="text-sm font-bold text-neutral-900 uppercase tracking-wider"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ 
+                      duration: reducedMotion ? 0.1 : 0.3,
+                      delay: reducedMotion ? 0 : index * 0.1 + 0.2
+                    }}
+                  >
+                    {stat.title}
+                  </motion.p>
+                  
+                  <motion.p 
+                    className={`text-3xl font-black ${stat.color} mt-2 leading-tight`}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ 
+                      duration: reducedMotion ? 0.1 : 0.4,
+                      delay: reducedMotion ? 0 : index * 0.1 + 0.3,
+                      ease: [0.25, 0.1, 0.25, 1]
+                    }}
+                  >
+                    {stat.format(stat.value)}
+                  </motion.p>
+                  
+                </div>
+                
+                <motion.div 
+                  className={`p-4 rounded-xl ${stat.bgColor} group-hover:scale-110 transition-transform duration-200 shadow-lg`}
+                  initial={{ scale: 0, rotate: 90 }}
+                  animate={{ scale: 1, rotate: 0 }}
+                  transition={{ 
+                    duration: reducedMotion ? 0.1 : 0.5,
+                    delay: reducedMotion ? 0 : index * 0.1 + 0.6,
+                    type: reducedMotion ? "tween" : "spring",
+                    stiffness: 150
+                  }}
+                >
+                  <div className={`h-8 w-8 rounded-lg ${stat.iconColor}`}></div>
+                </motion.div>
+              </div>
+            </CardContent>
+          </Card>
+        </motion.div>
       ))}
-    </div>
+    </motion.div>
   );
 };
 

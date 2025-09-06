@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useRouter } from 'next/router';
-import { Search, Phone, MessageCircle, ChevronDown, Eye } from 'lucide-react';
+import { Search, Phone, MessageCircle, ChevronDown, Eye, Plus } from 'lucide-react';
 import { leadsApi } from '@/services/api';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
@@ -10,7 +10,9 @@ import Pagination from '@/components/ui/Pagination';
 import Badge from '@/components/ui/Badge';
 import { Card, CardContent } from '@/components/ui/Card';
 import LeadFiltersComponent from '@/components/leads/LeadFilters';
-import { Lead, TableColumn, LeadFilters } from '@/types';
+import AIPriorityActions from '@/components/leads/AIPriorityActions';
+import AddLeadModal from '@/components/leads/AddLeadModal';
+import { Lead, TableColumn, LeadFilters, LeadFormData } from '@/types';
 import { 
   formatDate, 
   formatCurrency, 
@@ -29,6 +31,7 @@ const LeadsPage: React.FC = () => {
   const [sortKey, setSortKey] = useState<string>('');
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
   const [filters, setFilters] = useState<LeadFilters>({});
+  const [isAddLeadModalOpen, setIsAddLeadModalOpen] = useState(false);
   
   // Local state for managing lead updates (no API calls)
   const [localLeads, setLocalLeads] = useState<Lead[]>([]);
@@ -60,6 +63,30 @@ const LeadsPage: React.FC = () => {
     const safeLeads = Array.isArray(leads) ? leads : [];
     
     let result = filterBySearch(safeLeads, searchTerm, ['name', 'email', 'phone', 'source', 'status']);
+    
+    // Apply custom filters
+    if (filters.source && filters.source.length > 0) {
+      result = result.filter(lead => filters.source!.includes(lead.source));
+    }
+    
+    if (filters.status && filters.status.length > 0) {
+      result = result.filter(lead => filters.status!.includes(lead.status));
+    }
+    
+    if (filters.assignedTo && filters.assignedTo.length > 0) {
+      result = result.filter(lead => {
+        return filters.assignedTo!.some(filterType => {
+          if (filterType === 'unassigned') {
+            return !lead.assignedTo;
+          } else if (filterType === 'ai') {
+            return lead.assignmentType === 'AI';
+          } else if (filterType === 'human') {
+            return lead.assignmentType === 'Human';
+          }
+          return false;
+        });
+      });
+    }
     
     if (sortKey) {
       result = result.sort((a, b) => {
@@ -139,15 +166,6 @@ const LeadsPage: React.FC = () => {
     );
   };
 
-  const handleAssignLead = (leadId: string, assignedTo: string) => {
-    setLocalLeads(prev => 
-      prev.map(lead => 
-        lead.id === leadId 
-          ? { ...lead, assignedTo }
-          : lead
-      )
-    );
-  };
 
   const handleWhatsApp = (lead: Lead) => {
     const message = `Hi ${lead.name}, Thank you for your interest in TripongoStays. I'm here to help you with your booking requirements.`;
@@ -162,6 +180,29 @@ const LeadsPage: React.FC = () => {
     router.push(`/profile/${lead.id}?type=id`);
   };
 
+  const handleAddLead = (leadData: LeadFormData) => {
+    // Generate a new lead with a unique ID
+    const newLead: Lead = {
+      id: `new-${Date.now()}`,
+      name: leadData.name,
+      email: leadData.email,
+      phone: leadData.phone,
+      source: leadData.source,
+      status: 'New',
+      assignedTo: 'ai-agent', // Auto-assign to AI initially
+      assignmentType: 'AI',
+      createdDate: new Date().toISOString(),
+      priority: leadData.priority,
+      notes: leadData.notes,
+      expectedRevenue: 0
+    };
+
+    // Add to local leads
+    setLocalLeads(prev => [newLead, ...prev]);
+    
+    console.log('New lead added:', newLead);
+  };
+
   const StatusDropdown: React.FC<{ lead: Lead }> = ({ lead }) => {
     const [isOpen, setIsOpen] = useState(false);
     const statusOptions: Lead['status'][] = ['New', 'Hot', 'Follow-up', 'Converted', 'Lost'];
@@ -169,7 +210,7 @@ const LeadsPage: React.FC = () => {
     return (
       <div className="relative">
         <Button
-          variant="outline"
+          variant="secondary"
           size="sm"
           onClick={() => setIsOpen(!isOpen)}
           rightIcon={<ChevronDown className="h-3 w-3" />}
@@ -204,47 +245,73 @@ const LeadsPage: React.FC = () => {
 
   const AssignmentDropdown: React.FC<{ lead: Lead }> = ({ lead }) => {
     const [isOpen, setIsOpen] = useState(false);
-    const agents = [
-      { id: '2', name: 'Priya Sharma' },
-      { id: '3', name: 'Rahul Kumar' },
-      { id: '4', name: 'Sneha Patel' },
+    const assignmentTypes = [
+      { type: 'unassigned', label: 'Unassigned', color: 'text-gray-600' },
+      { type: 'AI', label: 'Voice Agent (AI)', color: 'text-purple-600' },
+      { type: 'Human', label: 'Human Agent', color: 'text-blue-600' },
     ];
 
-    const assignedAgent = agents.find(agent => agent.id === lead.assignedTo);
+    const getCurrentAssignmentLabel = () => {
+      if (!lead.assignedTo) {
+        return 'Unassigned';
+      }
+      return lead.assignmentType === 'AI' ? 'Voice Agent (AI)' : 'Human Agent';
+    };
+
+    const getCurrentAssignmentColor = () => {
+      if (!lead.assignedTo) {
+        return 'text-gray-600';
+      }
+      return lead.assignmentType === 'AI' ? 'text-purple-600' : 'text-blue-600';
+    };
+
+    const handleAssignmentTypeChange = (type: string) => {
+      if (type === 'unassigned') {
+        // Update both assignedTo and assignmentType
+        setLocalLeads(prev => 
+          prev.map(l => 
+            l.id === lead.id 
+              ? { ...l, assignedTo: null, assignmentType: 'AI' as const }
+              : l
+          )
+        );
+      } else {
+        // Assign to AI or Human - we'll use a generic ID for now
+        const assignedToId = type === 'AI' ? 'ai-agent' : 'human-agent';
+        setLocalLeads(prev => 
+          prev.map(l => 
+            l.id === lead.id 
+              ? { ...l, assignedTo: assignedToId, assignmentType: type as 'AI' | 'Human' }
+              : l
+          )
+        );
+      }
+    };
 
     return (
       <div className="relative">
         <Button
-          variant="outline"
+          variant="secondary"
           size="sm"
           onClick={() => setIsOpen(!isOpen)}
           rightIcon={<ChevronDown className="h-3 w-3" />}
-          className="min-w-[120px] justify-between"
+          className={`min-w-[140px] justify-between ${getCurrentAssignmentColor()}`}
         >
-          {assignedAgent ? assignedAgent.name : 'Unassigned'}
+          {getCurrentAssignmentLabel()}
         </Button>
         
         {isOpen && (
-          <div className="absolute top-full left-0 mt-1 w-48 bg-white border border-neutral-border-gray rounded-lg shadow-lg z-10">
-            <button
-              className="w-full px-3 py-2 text-left text-sm hover:bg-neutral-light-gray first:rounded-t-lg"
-              onClick={() => {
-                handleAssignLead(lead.id, '');
-                setIsOpen(false);
-              }}
-            >
-              Unassigned
-            </button>
-            {agents.map((agent) => (
+          <div className="absolute top-full left-0 mt-1 w-52 bg-white border border-neutral-border-gray rounded-lg shadow-lg z-10">
+            {assignmentTypes.map((assignment) => (
               <button
-                key={agent.id}
-                className="w-full px-3 py-2 text-left text-sm hover:bg-neutral-light-gray last:rounded-b-lg"
+                key={assignment.type}
+                className={`w-full px-3 py-2 text-left text-sm hover:bg-neutral-light-gray first:rounded-t-lg last:rounded-b-lg ${assignment.color}`}
                 onClick={() => {
-                  handleAssignLead(lead.id, agent.id);
+                  handleAssignmentTypeChange(assignment.type);
                   setIsOpen(false);
                 }}
               >
-                {agent.name}
+                {assignment.label}
               </button>
             ))}
           </div>
@@ -312,31 +379,31 @@ const LeadsPage: React.FC = () => {
       key: 'actions',
       label: 'Actions',
       render: (_, lead) => (
-        <div className="flex space-x-2">
+        <div className="flex space-x-1.5 min-w-0">
           <Button
             size="sm"
-            variant="outline"
+            variant="secondary"
             onClick={() => handleViewProfile(lead)}
             leftIcon={<Eye className="h-3 w-3" />}
-            className="text-gray-600 border-gray-300 hover:bg-gray-50"
+            className="text-gray-600 border-gray-300 hover:bg-gray-50 flex-shrink-0"
           >
             Profile
           </Button>
           <Button
             size="sm"
-            variant="outline"
+            variant="success"
             onClick={() => handleWhatsApp(lead)}
             leftIcon={<MessageCircle className="h-3 w-3" />}
-            className="text-secondary-green border-secondary-green hover:bg-green-50"
+            className="flex-shrink-0"
           >
             WhatsApp
           </Button>
           <Button
             size="sm"
-            variant="outline"
+            variant="secondary"
             onClick={() => handleCall(lead)}
             leftIcon={<Phone className="h-3 w-3" />}
-            className="text-secondary-blue border-secondary-blue hover:bg-blue-50"
+            className="text-blue-600 border-blue-300 hover:bg-blue-50 hover:border-blue-400 flex-shrink-0"
           >
             Call
           </Button>
@@ -351,7 +418,7 @@ const LeadsPage: React.FC = () => {
         <div className="text-center">
           <p className="text-secondary-red">Failed to load leads</p>
           <Button
-            variant="outline"
+            variant="secondary"
             onClick={() => window.location.reload()}
             className="mt-2"
           >
@@ -377,8 +444,18 @@ const LeadsPage: React.FC = () => {
             onChange={handleSearch}
             className="w-64"
           />
+          <Button
+            onClick={() => setIsAddLeadModalOpen(true)}
+            leftIcon={<Plus className="h-4 w-4" />}
+            className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-medium"
+          >
+            Add Lead
+          </Button>
         </div>
       </div>
+
+      {/* AI Priority Actions */}
+      <AIPriorityActions />
 
       {/* Filters */}
       <LeadFiltersComponent
@@ -412,6 +489,13 @@ const LeadsPage: React.FC = () => {
           />
         </div>
       )}
+
+      {/* Add Lead Modal */}
+      <AddLeadModal
+        isOpen={isAddLeadModalOpen}
+        onClose={() => setIsAddLeadModalOpen(false)}
+        onSave={handleAddLead}
+      />
     </div>
   );
 };

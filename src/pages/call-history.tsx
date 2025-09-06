@@ -79,6 +79,13 @@ const CallHistoryPage: React.FC = () => {
         if (aValue == null) return 1 * dir;   // undefined comes last in asc
         if (bValue == null) return -1 * dir;
 
+        // Special handling for date fields
+        if (sortKey === 'date') {
+          const dateA = new Date(aValue as string).getTime();
+          const dateB = new Date(bValue as string).getTime();
+          return (dateA - dateB) * dir; // Standard date comparison
+        }
+
         // Strings
         if (typeof aValue === 'string' && typeof bValue === 'string') {
           return aValue.localeCompare(bValue) * dir;
@@ -92,6 +99,10 @@ const CallHistoryPage: React.FC = () => {
         // Fallback
         return String(aValue).localeCompare(String(bValue)) * dir;
       });
+    } else {
+      // If no sorting is applied, maintain the API's default chronological order (newest first)
+      // The API already returns data sorted by date desc, so we don't need to sort again
+      // This ensures the natural order is preserved when no explicit sorting is set
     }
     
     return result;
@@ -284,7 +295,7 @@ const CallHistoryPage: React.FC = () => {
             variant="outline"
             onClick={() => setShowFilters(!showFilters)}
             leftIcon={<Filter className="h-4 w-4" />}
-            className={hasActiveFilters ? 'border-primary-orange text-primary-orange' : ''}
+            className={hasActiveFilters ? 'border-brand-primary-500 text-brand-primary-600' : ''}
           >
             Filters
             {hasActiveFilters && (
@@ -346,7 +357,7 @@ const CallHistoryPage: React.FC = () => {
                         type="checkbox"
                         checked={filters.type?.includes(type) || false}
                         onChange={() => handleFilterChange('type', type)}
-                        className="rounded border-neutral-border-gray text-primary-orange focus:ring-primary-orange"
+                        className="rounded border-neutral-border-gray text-brand-primary-600 focus:ring-brand-primary-500"
                       />
                       <span className="text-sm text-neutral-gray">{type}</span>
                     </label>
@@ -364,7 +375,7 @@ const CallHistoryPage: React.FC = () => {
                         type="checkbox"
                         checked={filters.status?.includes(status) || false}
                         onChange={() => handleFilterChange('status', status)}
-                        className="rounded border-neutral-border-gray text-primary-orange focus:ring-primary-orange"
+                        className="rounded border-neutral-border-gray text-brand-primary-600 focus:ring-brand-primary-500"
                       />
                       <span className="text-sm text-neutral-gray">{status}</span>
                     </label>
@@ -382,7 +393,7 @@ const CallHistoryPage: React.FC = () => {
                         type="checkbox"
                         checked={filters.result?.includes(result) || false}
                         onChange={() => handleFilterChange('result', result)}
-                        className="rounded border-neutral-border-gray text-primary-orange focus:ring-primary-orange"
+                        className="rounded border-neutral-border-gray text-brand-primary-600 focus:ring-brand-primary-500"
                       />
                       <span className="text-sm text-neutral-gray">{result}</span>
                     </label>

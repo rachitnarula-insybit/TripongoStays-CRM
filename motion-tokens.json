@@ -1,0 +1,59 @@
+{
+  "durations": {
+    "micro": 150,
+    "fast": 200,
+    "normal": 300,
+    "slow": 500,
+    "hero": 800,
+    "page": 1000
+  },
+  "easings": {
+    "note": "CSS format - use easingFunctions in motion.ts for Framer Motion",
+    "apple": "cubic-bezier(0.25, 0.1, 0.25, 1)",
+    "swift": "cubic-bezier(0.4, 0.0, 0.2, 1)",
+    "entrance": "cubic-bezier(0.0, 0.0, 0.2, 1)",
+    "exit": "cubic-bezier(0.4, 0.0, 1, 1)",
+    "spring": "cubic-bezier(0.175, 0.885, 0.32, 1.275)",
+    "bounce": "cubic-bezier(0.68, -0.55, 0.265, 1.55)"
+  },
+  "transforms": {
+    "scale": {
+      "press": 0.96,
+      "hover": 1.02,
+      "focus": 1.05,
+      "entrance": 0.9
+    },
+    "translate": {
+      "slide": "8px",
+      "float": "4px",
+      "entrance": "16px"
+    },
+    "rotate": {
+      "subtle": "1deg",
+      "moderate": "3deg"
+    }
+  },
+  "stagger": {
+    "cards": 0.1,
+    "list": 0.05,
+    "nav": 0.08
+  },
+  "delays": {
+    "immediate": 0,
+    "short": 100,
+    "medium": 200,
+    "long": 400
+  },
+  "zLayers": {
+    "dropdown": 50,
+    "modal": 100,
+    "toast": 200,
+    "tooltip": 300
+  },
+  "physics": {
+    "damping": 25,
+    "stiffness": 300,
+    "mass": 1,
+    "velocity": 0.5
+  }
+}
