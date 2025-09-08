@@ -2,12 +2,10 @@ import React from 'react';
 import {
   Phone,
   PhoneCall,
-  PhoneMissed,
   Calendar,
   Clock,
   TrendingUp,
   DollarSign,
-  Target,
   Activity
 } from 'lucide-react';
 import { UserProfile } from '@/types';

@@ -1,14 +1,12 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
-  Settings, 
-  Eye, 
-  Type, 
   Volume2, 
   Keyboard, 
   MousePointer,
   X,
-  Check
+  Check,
+  Eye
 } from 'lucide-react';
 import Button from './Button';
 import { Card, CardHeader, CardTitle, CardContent } from './Card';
@@ -26,7 +24,7 @@ const AccessibilityPanel: React.FC<AccessibilityPanelProps> = ({ isOpen, onClose
   const reducedMotion = useReducedMotion();
   const motionVariants = createMotionVariants(reducedMotion);
 
-  const handlePreferenceChange = (key: keyof typeof preferences, value: any) => {
+  const handlePreferenceChange = (key: keyof typeof preferences, value: boolean | number | string) => {
     updatePreferences({ [key]: value });
     hapticFeedback.light();
     announceToScreenReader(`${key} ${value ? 'enabled' : 'disabled'}`);

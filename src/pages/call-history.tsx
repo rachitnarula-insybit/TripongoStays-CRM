@@ -184,12 +184,12 @@ const CallHistoryPage: React.FC = () => {
         <div className="flex items-center gap-2">
           <div>
             <div className="font-medium text-neutral-black">{value}</div>
-            <div className="text-sm text-neutral-gray">{record.phoneNumber}</div>
+            <div className="text-sm text-neutral-gray">{record?.phoneNumber}</div>
           </div>
           <Button
             size="sm"
-            variant="outline"
-            onClick={() => handleViewProfile(record)}
+            variant="tertiary"
+            onClick={() => record && handleViewProfile(record)}
             leftIcon={<Eye className="h-3 w-3" />}
             className="text-gray-600 border-gray-300 hover:bg-gray-50 ml-2"
           >
@@ -271,7 +271,7 @@ const CallHistoryPage: React.FC = () => {
         <div className="text-center">
           <p className="text-secondary-red">Failed to load call history</p>
           <Button
-            variant="outline"
+            variant="tertiary"
             onClick={() => window.location.reload()}
             className="mt-2"
           >
@@ -292,7 +292,7 @@ const CallHistoryPage: React.FC = () => {
         </div>
         <div className="flex items-center space-x-2">
           <Button
-            variant="outline"
+            variant="tertiary"
             onClick={() => setShowFilters(!showFilters)}
             leftIcon={<Filter className="h-4 w-4" />}
             className={hasActiveFilters ? 'border-brand-primary-500 text-brand-primary-600' : ''}
@@ -305,7 +305,7 @@ const CallHistoryPage: React.FC = () => {
             )}
           </Button>
           <Button
-            variant="outline"
+            variant="tertiary"
             onClick={handleExport}
             isLoading={exportMutation.isPending}
             leftIcon={<Download className="h-4 w-4" />}
@@ -336,7 +336,7 @@ const CallHistoryPage: React.FC = () => {
             </CardTitle>
             {hasActiveFilters && (
               <Button
-                variant="outline"
+                variant="tertiary"
                 size="sm"
                 onClick={handleClearFilters}
                 leftIcon={<X className="h-4 w-4" />}

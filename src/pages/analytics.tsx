@@ -5,7 +5,6 @@ import { BarChart3, TrendingUp, Brain, Target, Activity, MessageCircle, Sparkles
 import Layout from '@/components/layout/Layout';
 import { 
   PredictiveInsightsCard, 
-  PerformanceMetricsGrid, 
   AIRecommendationsPanel, 
   TrendAnalysisChart 
 } from '@/components/analytics';
@@ -15,7 +14,7 @@ import Button from '@/components/ui/Button';
 import FuturisticCard from '@/components/ui/FuturisticCard';
 import AIChat from '@/components/ai-chat/AIChat';
 import { useChatContext } from '@/contexts/ChatContext';
-import { useReducedMotion, createMotionVariants, hapticFeedback } from '@/utils/motion';
+import { useReducedMotion, hapticFeedback } from '@/utils/motion';
 import { mockAIRecommendations } from '@/data/aiMockData';
 import { cn } from '@/utils';
 
@@ -23,7 +22,6 @@ const AnalyticsPage: React.FC = () => {
   const [activeCategory, setActiveCategory] = useState('crm-overview');
   const { toggleChat, state: chatState } = useChatContext();
   const reducedMotion = useReducedMotion();
-  const motionVariants = createMotionVariants(reducedMotion);
 
   const analyticsCategories = [
     {

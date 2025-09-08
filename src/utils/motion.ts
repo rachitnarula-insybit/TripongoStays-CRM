@@ -135,7 +135,7 @@ export const glassVariants = {
 export const createMotionVariants = (reducedMotion: boolean): Record<string, Variants> => {
   const fastDuration = designTokens.motion.durations.fast / 1000;
   const normalDuration = designTokens.motion.durations.normal / 1000;
-  const slowDuration = designTokens.motion.durations.slow / 1000;
+  // const slowDuration = designTokens.motion.durations.slow / 1000;
 
   return {
     // Enhanced button variants with 120Hz optimization
@@ -368,8 +368,8 @@ export const willChange = {
 // Telemetry hooks for performance monitoring
 export const useMotionTelemetry = () => {
   const reportLongFrame = (duration: number) => {
-    if (typeof window !== 'undefined' && window.gtag) {
-      window.gtag('event', 'motion_long_frame', {
+    if (typeof window !== 'undefined' && (window as any).gtag) {
+      (window as any).gtag('event', 'motion_long_frame', {
         event_category: 'performance',
         value: Math.round(duration),
       });
@@ -377,8 +377,8 @@ export const useMotionTelemetry = () => {
   };
 
   const reportMotionEvent = (eventName: string, component: string) => {
-    if (typeof window !== 'undefined' && window.gtag) {
-      window.gtag('event', eventName, {
+    if (typeof window !== 'undefined' && (window as any).gtag) {
+      (window as any).gtag('event', eventName, {
         event_category: 'motion',
         event_label: component,
       });

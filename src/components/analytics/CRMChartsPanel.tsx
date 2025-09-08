@@ -1,37 +1,24 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   BarChart3,
-  LineChart,
-  PieChart,
-  TrendingUp,
-  TrendingDown,
-  Activity,
-  Calendar,
-  Filter,
-  Download,
-  Maximize2,
   RefreshCw,
-  Eye,
-  Users,
   DollarSign,
   Phone,
   Target,
   MapPin,
-  Clock,
-  Star,
-  Building,
-  Zap,
-  Award,
+  Activity,
+  Download,
+  Maximize2,
 } from 'lucide-react';
 import { cn } from '@/utils';
-import { useReducedMotion, createMotionVariants, hapticFeedback } from '@/utils/motion';
+import { useReducedMotion, hapticFeedback } from '@/utils/motion';
 import Button from '@/components/ui/Button';
 import FuturisticCard from '@/components/ui/FuturisticCard';
 import { dashboardApi, leadsApi, callHistoryApi, bookingsApi } from '@/services/api';
-import { Lead, CallRecord, Booking, DashboardStats } from '@/types';
+import { Lead, CallRecord, Booking } from '@/types';
 
 interface ChartData {
   period: string;
@@ -73,11 +60,10 @@ const CRMChartsPanel: React.FC = () => {
   const [callAnalytics, setCallAnalytics] = useState<CallAnalytics[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedChart, setSelectedChart] = useState('revenue');
-  const [timeRange, setTimeRange] = useState('6m');
+  const [timeRange] = useState('6m');
   const [selectedCity, setSelectedCity] = useState<string | null>(null);
 
   const reducedMotion = useReducedMotion();
-  const motionVariants = createMotionVariants(reducedMotion);
 
   const chartTypes = [
     { id: 'revenue', name: 'Revenue Trends', icon: DollarSign, color: 'from-green-500 to-emerald-500' },
@@ -86,12 +72,55 @@ const CRMChartsPanel: React.FC = () => {
     { id: 'geography', name: 'Geographic Performance', icon: MapPin, color: 'from-orange-500 to-red-500' },
   ];
 
+  const extractCityFromProperty = (propertyName: string): string => {
+    const cityKeywords = ['Mumbai', 'Delhi', 'Goa', 'Bangalore', 'Chennai', 'Kolkata', 'Udaipur', 'Jaipur'];
+    for (const city of cityKeywords) {
+      if (propertyName.toLowerCase().includes(city.toLowerCase())) {
+        return city;
+      }
+    }
+    return 'Other';
+  };
+
+  const generateCityData = useCallback((bookings: Booking[], leads: Lead[]): CityPerformance[] => {
+    const cityMap = new Map<string, { bookings: number; revenue: number; leads: number }>();
+
+    // Process bookings by city (extracted from property name)
+    bookings.forEach(booking => {
+      const city = extractCityFromProperty(booking.propertyName);
+      if (!cityMap.has(city)) {
+        cityMap.set(city, { bookings: 0, revenue: 0, leads: 0 });
+      }
+      const cityData = cityMap.get(city)!;
+      cityData.bookings += 1;
+      cityData.revenue += booking.totalAmount;
+    });
+
+    // Add leads data (simplified - in reality would need location data)
+    const cities = ['Mumbai', 'Delhi', 'Goa', 'Bangalore', 'Chennai', 'Kolkata'];
+    cities.forEach(city => {
+      if (!cityMap.has(city)) {
+        cityMap.set(city, { bookings: 0, revenue: 0, leads: 0 });
+      }
+      const cityData = cityMap.get(city)!;
+      cityData.leads = Math.floor(leads.length * (0.1 + Math.random() * 0.2)); // Simulate lead distribution
+    });
+
+    return Array.from(cityMap.entries()).map(([city, data]) => ({
+      city,
+      bookings: data.bookings,
+      revenue: data.revenue,
+      leads: data.leads,
+      occupancy: 75 + Math.random() * 20, // Simulate occupancy data
+    })).sort((a, b) => b.revenue - a.revenue).slice(0, 6);
+  }, []);
+
   // Fetch and process CRM data for charts
   useEffect(() => {
     const fetchChartData = async () => {
       setLoading(true);
       try {
-        const [dashStats, leadsData, callsData, bookingsData] = await Promise.all([
+        const [, leadsData, callsData, bookingsData] = await Promise.all([
           dashboardApi.getStats(),
           leadsApi.getLeads(1, 1000),
           callHistoryApi.getCallHistory(1, 1000),
@@ -126,7 +155,7 @@ const CRMChartsPanel: React.FC = () => {
     };
 
     fetchChartData();
-  }, [timeRange]);
+  }, [timeRange, generateCityData]);
 
   const generateTimeSeriesData = (leads: Lead[], calls: CallRecord[], bookings: Booking[]): ChartData[] => {
     // Generate last 6 months of data
@@ -169,38 +198,6 @@ const CRMChartsPanel: React.FC = () => {
     });
   };
 
-  const generateCityData = (bookings: Booking[], leads: Lead[]): CityPerformance[] => {
-    const cityMap = new Map<string, { bookings: number; revenue: number; leads: number }>();
-    
-    // Process bookings by city (extracted from property name)
-    bookings.forEach(booking => {
-      const city = extractCityFromProperty(booking.propertyName);
-      if (!cityMap.has(city)) {
-        cityMap.set(city, { bookings: 0, revenue: 0, leads: 0 });
-      }
-      const cityData = cityMap.get(city)!;
-      cityData.bookings += 1;
-      cityData.revenue += booking.totalAmount;
-    });
-
-    // Add leads data (simplified - in reality would need location data)
-    const cities = ['Mumbai', 'Delhi', 'Goa', 'Bangalore', 'Chennai', 'Kolkata'];
-    cities.forEach(city => {
-      if (!cityMap.has(city)) {
-        cityMap.set(city, { bookings: 0, revenue: 0, leads: 0 });
-      }
-      const cityData = cityMap.get(city)!;
-      cityData.leads = Math.floor(leads.length * (0.1 + Math.random() * 0.2)); // Simulate lead distribution
-    });
-
-    return Array.from(cityMap.entries()).map(([city, data]) => ({
-      city,
-      bookings: data.bookings,
-      revenue: data.revenue,
-      leads: data.leads,
-      occupancy: 75 + Math.random() * 20, // Simulate occupancy data
-    })).sort((a, b) => b.revenue - a.revenue).slice(0, 6);
-  };
 
   const generateLeadSourceData = (leads: Lead[], bookings: Booking[]): LeadSourceData[] => {
     const sourceMap = new Map<string, { count: number; conversions: number; revenue: number }>();
@@ -261,16 +258,6 @@ const CRMChartsPanel: React.FC = () => {
       successRate: data.count > 0 ? (data.successful / data.count) * 100 : 0,
       avgDuration: data.successful > 0 ? data.totalDuration / data.successful : 0,
     }));
-  };
-
-  const extractCityFromProperty = (propertyName: string): string => {
-    const cityKeywords = ['Mumbai', 'Delhi', 'Goa', 'Bangalore', 'Chennai', 'Kolkata', 'Udaipur', 'Jaipur'];
-    for (const city of cityKeywords) {
-      if (propertyName.toLowerCase().includes(city.toLowerCase())) {
-        return city;
-      }
-    }
-    return 'Other';
   };
 
   const formatValue = (value: number, type: string) => {

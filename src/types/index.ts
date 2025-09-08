@@ -162,7 +162,7 @@ export interface TableColumn<T> {
   key: keyof T | string;
   label: string;
   sortable?: boolean;
-  render?: (value: T[keyof T], row: T) => React.ReactNode;
+  render?: (value: T[keyof T], row?: T) => React.ReactNode;
 }
 
 export interface PaginationProps {
@@ -242,7 +242,7 @@ export interface UserProfile {
   bookings: Booking[];
   
   // Custom Attributes
-  customAttributes: Record<string, any>;
+  customAttributes: Record<string, string | number | boolean>;
 }
 
 export interface ProfileActivity {
@@ -251,9 +251,20 @@ export interface ProfileActivity {
   title: string;
   description?: string;
   date: string;
-  metadata?: Record<string, any>;
+  metadata?: ProfileActivityMetadata;
   icon?: string;
   color?: string;
+}
+
+export interface ProfileActivityMetadata {
+  callRecord?: {
+    duration: number;
+    phoneNumber: string;
+  };
+  booking?: {
+    nights: number;
+    totalAmount: number;
+  };
 }
 
 export interface ProfileNote {
@@ -282,5 +293,109 @@ export interface ProfileFilters {
     start: string;
     end: string;
   };
-  engagementLevel?: 'high' | 'medium' | 'low'[];
+  engagementLevel?: ('high' | 'medium' | 'low')[];
+}
+
+// API Backend Response Types
+export interface BackendLeadData {
+  id?: string | number;
+  leadName?: {
+    name?: string;
+    email?: string;
+    phone?: string;
+  };
+  name?: string;
+  email?: string;
+  phone?: string;
+  source?: string;
+  status?: string;
+  assignedTo?: string | null;
+  assignmentType?: string;
+  createdDate?: string;
+  lastContactDate?: string;
+  notes?: string;
+  message?: string;
+  priority?: string;
+  expectedRevenue?: number;
+  propertyName?: string;
+  propertyLocation?: string;
+}
+
+export interface BackendBookingData {
+  id?: string | number;
+  _id?: string;
+  bookingReference?: string;
+  guestName?: string;
+  guestEmail?: string;
+  guestPhone?: string;
+  phone?: string;
+  propertyName?: string;
+  propertyId?: string;
+  checkInDate?: string;
+  checkOutDate?: string;
+  startDate?: string;
+  endDate?: string;
+  nights?: number;
+  guests?: number;
+  baseAmount?: number;
+  taxAmount?: number;
+  totalAmount?: number;
+  amount?: number;
+  status?: string;
+  paymentStatus?: string;
+  payment?: string;
+  createdDate?: string;
+  createdAt?: string;
+  source?: string;
+  user?: {
+    name?: string;
+    fullname?: string;
+    fullName?: string;
+    email?: string;
+    phone?: string;
+  };
+  property?: {
+    name?: string;
+    id?: string;
+    _id?: string;
+  };
+}
+
+export interface CallAnalysisResponse {
+  primary_collection_analyses?: Array<{
+    Statistical_Details?: {
+      other_details?: {
+        call_status?: string;
+        metadata?: {
+          metadata?: {
+            phone_call?: {
+              caller_id?: string;
+              call_type?: string;
+              call_status?: string;
+              call_duration?: number;
+              call_date?: string;
+              direction?: string;
+              external_number?: string;
+              call_duration_secs?: number;
+            };
+          };
+          conversation_initiation_client_data?: {
+            dynamic_variables?: Record<string, unknown>;
+          };
+        };
+      };
+    };
+    Other_Details_LLM?: {
+      result_action?: {
+        result?: string;
+        notes?: string;
+        action_required?: string;
+      };
+      summary?: string;
+    };
+  }>;
+}
+
+export interface RenderFunction<T> {
+  (value: T[keyof T], row: T): React.ReactNode;
 }

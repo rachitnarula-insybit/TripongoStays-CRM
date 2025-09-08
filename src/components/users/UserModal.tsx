@@ -122,7 +122,7 @@ const UserModal: React.FC<UserModalProps> = ({
         <div className="flex justify-end space-x-3 pt-4">
           <Button
             type="button"
-            variant="outline"
+            variant="tertiary"
             onClick={onClose}
             disabled={isSubmitting}
           >

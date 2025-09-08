@@ -48,14 +48,14 @@ const InventoryPage: React.FC = () => {
         </div>
         <div className="flex items-center space-x-2">
           <Button
-            variant="outline"
+            variant="tertiary"
             onClick={handleRefresh}
             leftIcon={<RefreshCw className="h-4 w-4" />}
           >
             Refresh
           </Button>
           <Button
-            variant="outline"
+            variant="tertiary"
             onClick={handleOpenInNewTab}
             leftIcon={<ExternalLink className="h-4 w-4" />}
           >
@@ -100,7 +100,7 @@ const InventoryPage: React.FC = () => {
                 </p>
                 <div className="flex flex-col sm:flex-row gap-3 justify-center">
                   <Button
-                    variant="outline"
+                    variant="tertiary"
                     onClick={handleRefresh}
                     leftIcon={<RefreshCw className="h-4 w-4" />}
                   >
@@ -153,7 +153,7 @@ const InventoryPage: React.FC = () => {
               <h4 className="font-semibold text-neutral-black mb-2">Quick Actions:</h4>
               <div className="space-y-2">
                 <Button
-                  variant="outline"
+                  variant="tertiary"
                   size="sm"
                   onClick={handleOpenInNewTab}
                   leftIcon={<ExternalLink className="h-4 w-4" />}
@@ -162,7 +162,7 @@ const InventoryPage: React.FC = () => {
                   Open in Full Screen
                 </Button>
                 <Button
-                  variant="outline"
+                  variant="tertiary"
                   size="sm"
                   onClick={handleRefresh}
                   leftIcon={<RefreshCw className="h-4 w-4" />}

@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState } from 'react';
 
 // Accessibility preferences manager
 class AccessibilityPreferences {
@@ -58,7 +58,7 @@ class AccessibilityPreferences {
       navigator.userAgent.includes('JAWS') ||
       navigator.userAgent.includes('VoiceOver') ||
       window.speechSynthesis ||
-      (window as any).chrome?.tts
+      (window as Window & { chrome?: { tts?: unknown } })?.chrome?.tts
     );
   }
 
@@ -168,17 +168,17 @@ export class FocusManager {
     };
 
     container.addEventListener('keydown', handleTabKey);
-    (container as any)._focusTrapHandler = handleTabKey;
+    (container as HTMLElement & { _focusTrapHandler?: (e: KeyboardEvent) => void })._focusTrapHandler = handleTabKey;
 
     // Focus first element
     firstElement?.focus();
   }
 
   private static removeFocusTrap(container: HTMLElement): void {
-    const handler = (container as any)._focusTrapHandler;
+    const handler = (container as HTMLElement & { _focusTrapHandler?: (e: KeyboardEvent) => void })._focusTrapHandler;
     if (handler) {
       container.removeEventListener('keydown', handler);
-      delete (container as any)._focusTrapHandler;
+      delete (container as HTMLElement & { _focusTrapHandler?: (e: KeyboardEvent) => void })._focusTrapHandler;
     }
   }
 

@@ -10,7 +10,7 @@ interface AIChatProps {
 }
 
 const AIChat: React.FC<AIChatProps> = ({ className }) => {
-  const { state, toggleChat, closeChat } = useChatContext();
+  const { state, closeChat } = useChatContext();
 
 
   // Focus management

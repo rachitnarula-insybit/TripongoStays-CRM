@@ -1,4 +1,5 @@
 import React from 'react';
+import Image from 'next/image';
 import { 
   Phone, 
   Mail, 
@@ -7,13 +8,12 @@ import {
   MessageCircle,
   Edit3,
   MoreHorizontal,
-  User,
   Building2
 } from 'lucide-react';
 import { UserProfile } from '@/types';
 import Badge from '@/components/ui/Badge';
 import Button from '@/components/ui/Button';
-import { formatDate, formatDuration, formatCurrency, initiateCall, openWhatsApp } from '@/utils';
+import { formatDate, formatCurrency, initiateCall, openWhatsApp } from '@/utils';
 
 interface ProfileHeaderProps {
   profile: UserProfile;
@@ -79,9 +79,11 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({ profile, onEdit }) => {
             <div className="relative">
               <div className="w-32 h-32 rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center shadow-lg border-4 border-white">
                 {profile.avatar ? (
-                  <img
+                  <Image
                     src={profile.avatar}
                     alt={profile.name}
+                    width={128}
+                    height={128}
                     className="w-full h-full rounded-2xl object-cover"
                   />
                 ) : (
@@ -187,7 +189,7 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({ profile, onEdit }) => {
                 <Button
                   onClick={onEdit}
                   leftIcon={<Edit3 className="h-4 w-4" />}
-                  variant="outline"
+                  variant="tertiary"
                   size="sm"
                 >
                   Edit
@@ -196,7 +198,7 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({ profile, onEdit }) => {
               
               <Button
                 leftIcon={<MoreHorizontal className="h-4 w-4" />}
-                variant="outline"
+                variant="tertiary"
                 size="sm"
               >
                 More

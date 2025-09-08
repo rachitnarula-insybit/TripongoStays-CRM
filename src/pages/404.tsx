@@ -33,7 +33,7 @@ const NotFoundPage: React.FC = () => {
               </Button>
             </Link>
             <Button
-              variant="outline"
+              variant="tertiary"
               className="w-full"
               onClick={() => window.history.back()}
               leftIcon={<ArrowLeft className="h-4 w-4" />}

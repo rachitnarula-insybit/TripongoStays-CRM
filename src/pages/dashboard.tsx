@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { motion } from 'framer-motion';
-import { RefreshCw, TrendingUp, Users, Calendar, DollarSign, Sparkles, Brain } from 'lucide-react';
+import { RefreshCw, TrendingUp, Users, Calendar, Sparkles, Brain } from 'lucide-react';
 import { dashboardApi, leadsApi } from '@/services/api';
 import Button from '@/components/ui/Button';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/Card';
@@ -15,7 +15,7 @@ import AIBackgroundAnimation from '@/components/dashboard/AIBackgroundAnimation'
 import { AnalyticsLauncher } from '@/components/analytics';
 import { useReducedMotion, createMotionVariants } from '@/utils/motion';
 import { cn } from '@/utils';
-import { mockAIAlerts, mockAIRecommendations, getHighPriorityItems } from '@/data/aiMockData';
+import { mockAIRecommendations } from '@/data/aiMockData';
 
 const DashboardPage: React.FC = () => {
   const reducedMotion = useReducedMotion();
@@ -23,8 +23,8 @@ const DashboardPage: React.FC = () => {
   const [dismissedRecommendations, setDismissedRecommendations] = useState<string[]>([]);
   
   // Get high priority AI items
-  const highPriorityItems = getHighPriorityItems();
-  const visibleAlerts = mockAIAlerts;
+  // const _highPriorityItems = getHighPriorityItems();
+  // const _visibleAlerts = mockAIAlerts;
   const visibleRecommendations = mockAIRecommendations.filter(rec => !dismissedRecommendations.includes(rec.id));
 
   const {

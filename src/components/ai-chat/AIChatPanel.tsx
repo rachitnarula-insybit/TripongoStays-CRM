@@ -15,7 +15,7 @@ import {
 } from 'lucide-react';
 import { cn } from '@/utils';
 import { useChatContext, ChatMessage } from '@/contexts/ChatContext';
-import { useReducedMotion, createMotionVariants, hapticFeedback } from '@/utils/motion';
+import { useReducedMotion, hapticFeedback } from '@/utils/motion';
 import Button from '@/components/ui/Button';
 
 interface AIChatPanelProps {
@@ -30,7 +30,6 @@ const AIChatPanel: React.FC<AIChatPanelProps> = ({ className }) => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const reducedMotion = useReducedMotion();
-  const motionVariants = createMotionVariants(reducedMotion);
 
   // Auto-resize textarea
   useEffect(() => {
@@ -90,13 +89,6 @@ const AIChatPanel: React.FC<AIChatPanelProps> = ({ className }) => {
     setShowSettings(false);
   };
 
-  const formatTime = (date: Date) => {
-    return new Intl.DateTimeFormat('en-US', {
-      hour: '2-digit',
-      minute: '2-digit',
-      hour12: false,
-    }).format(date);
-  };
 
   if (!state.isOpen) return null;
 
@@ -192,7 +184,7 @@ const AIChatPanel: React.FC<AIChatPanelProps> = ({ className }) => {
                 <div className="relative">
                   <select
                     value={state.model}
-                    onChange={(e) => setModel(e.target.value as any)}
+                    onChange={(e) => setModel(e.target.value as 'gpt-4' | 'gpt-3.5-turbo' | 'claude-3')}
                     className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-sm text-neutral-900 appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-brand-accent focus:border-transparent"
                   >
                     <option value="gpt-4">GPT-4 (Most Capable)</option>
@@ -238,7 +230,7 @@ const AIChatPanel: React.FC<AIChatPanelProps> = ({ className }) => {
               Welcome to AI Assistant
             </h3>
             <p className="text-sm text-neutral-600 max-w-64">
-              I'm here to help you with your CRM tasks, analyze data, and answer questions about your business.
+              I&apos;m here to help you with your CRM tasks, analyze data, and answer questions about your business.
             </p>
           </motion.div>
         ) : (

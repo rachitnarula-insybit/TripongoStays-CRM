@@ -1,8 +1,6 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { AlertTriangle, Info, TrendingUp, TrendingDown } from 'lucide-react';
-import { Card, CardHeader, CardContent } from '@/components/ui/Card';
-import Button from '@/components/ui/Button';
 import { useReducedMotion, createMotionVariants } from '@/utils/motion';
 import { cn } from '@/utils';
 import FuturisticCard from '@/components/ui/FuturisticCard';

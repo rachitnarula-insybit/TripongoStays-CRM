@@ -121,10 +121,10 @@ const AIPriorityActions: React.FC = () => {
     }
   };
 
-  const handleActionClick = (action: PriorityAction) => {
-    // Handle different action types
-    console.log('Action clicked:', action);
-  };
+  // const _handleActionClick = (action: PriorityAction) => {
+  //   // Handle different action types
+  //   console.log('Action clicked:', action);
+  // };
 
   const handleCallLead = (leadId: string) => {
     console.log('Calling lead:', leadId);
@@ -185,7 +185,7 @@ const AIPriorityActions: React.FC = () => {
 
         {/* Actions List */}
         <div className="p-4 space-y-3">
-          {mockPriorityActions.map((action, index) => (
+          {mockPriorityActions.map((action) => (
             <div
               key={action.id}
               className="group relative overflow-hidden rounded-lg border border-gray-200 bg-white hover:shadow-md transition-all duration-300 hover:-translate-y-0.5"

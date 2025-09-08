@@ -85,7 +85,7 @@ class ErrorBoundary extends Component<Props, State> {
                   Reload Page
                 </Button>
                 <Button
-                  variant="outline"
+                  variant="tertiary"
                   onClick={this.handleGoHome}
                   className="w-full"
                   leftIcon={<Home className="h-4 w-4" />}

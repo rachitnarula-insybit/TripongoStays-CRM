@@ -7,20 +7,17 @@ import {
   TrendingDown,
   Brain,
   Zap,
-  AlertTriangle,
   CheckCircle,
   Clock,
   Target,
   Activity,
   BarChart3,
   PieChart,
-  LineChart,
 } from 'lucide-react';
 import { cn } from '@/utils';
 import { useReducedMotion, createMotionVariants } from '@/utils/motion';
 import FuturisticCard from '@/components/ui/FuturisticCard';
 import Button from '@/components/ui/Button';
-import { mockAIAlerts } from '@/data/aiMockData';
 
 interface PredictionData {
   id: string;
@@ -315,7 +312,7 @@ const PredictiveInsightsCard: React.FC = () => {
                             transition={{ delay: 0.1 }}
                           >
                             <Button
-                              variant="outline"
+                              variant="tertiary"
                               size="sm"
                               className="w-full justify-center bg-gradient-to-r from-purple-500/10 to-pink-500/10 border-purple-500/20 hover:from-purple-500/20 hover:to-pink-500/20"
                             >

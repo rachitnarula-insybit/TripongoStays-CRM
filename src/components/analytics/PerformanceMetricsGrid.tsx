@@ -4,9 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   TrendingUp,
-  Users,
   DollarSign,
-  Phone,
   Calendar,
   Target,
   Activity,
@@ -134,6 +132,19 @@ const PerformanceMetricsGrid: React.FC = () => {
       return `${value}${unit || '%'}`;
     }
     return `${value}${unit || ''}`;
+  };
+
+  const getTrendColor = (trend: string) => {
+    switch (trend) {
+      case 'up':
+        return 'text-green-600';
+      case 'down':
+        return 'text-red-600';
+      case 'stable':
+        return 'text-neutral-600';
+      default:
+        return 'text-neutral-600';
+    }
   };
 
 
@@ -278,7 +289,7 @@ const PerformanceMetricsGrid: React.FC = () => {
                           </div>
                           <div className={cn(
                             'text-sm font-bold',
-                            getTrendColor(metric.trend, metric.change)
+                            getTrendColor(metric.trend)
                           )}>
                             {metric.trend === 'up' ? 'Improving' : metric.trend === 'down' ? 'Declining' : 'Stable'}
                           </div>

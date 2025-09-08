@@ -1,25 +1,12 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { 
-  Zap, 
-  Target, 
-  Users, 
-  MessageSquare, 
-  Calendar, 
-  TrendingUp, 
-  Mail,
-  Phone,
+import {
+  TrendingUp,
   DollarSign,
-  Clock,
   ChevronRight,
   Sparkles,
   CheckCircle,
   X,
-  BarChart3,
-  Gauge,
-  ArrowUp,
-  ArrowDown,
-  AlertTriangle
 } from 'lucide-react';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
@@ -66,86 +53,86 @@ const AIRecommendations: React.FC<AIRecommendationsProps> = ({
   const motionVariants = createMotionVariants(reducedMotion);
   const [completedActions, setCompletedActions] = useState<Set<string>>(new Set());
 
-  const getRecommendationConfig = (type: AIRecommendation['type']) => {
-    switch (type) {
-      case 'lead_nurturing':
-        return {
-          icon: Users,
-          iconBg: 'bg-brand-primary-100',
-          iconColor: 'text-brand-primary-600',
-          category: 'Lead Management'
-        };
-      case 'booking_optimization':
-        return {
-          icon: Calendar,
-          iconBg: 'bg-success-light',
-          iconColor: 'text-success-default',
-          category: 'Booking Optimization'
-        };
-      case 'revenue_growth':
-        return {
-          icon: DollarSign,
-          iconBg: 'bg-warning-light',
-          iconColor: 'text-warning-default',
-          category: 'Revenue Growth'
-        };
-      case 'customer_retention':
-        return {
-          icon: Target,
-          iconBg: 'bg-info-light',
-          iconColor: 'text-info-default',
-          category: 'Customer Retention'
-        };
-      case 'efficiency':
-        return {
-          icon: Zap,
-          iconBg: 'bg-brand-accent/10',
-          iconColor: 'text-brand-accent',
-          category: 'Efficiency'
-        };
-      default:
-        return {
-          icon: Sparkles,
-          iconBg: 'bg-neutral-100',
-          iconColor: 'text-neutral-600',
-          category: 'General'
-        };
-    }
-  };
+  // const _getRecommendationConfig = (type: AIRecommendation['type']) => {
+  //   switch (type) {
+  //     case 'lead_nurturing':
+  //       return {
+  //         icon: Users,
+  //         iconBg: 'bg-brand-primary-100',
+  //         iconColor: 'text-brand-primary-600',
+  //         category: 'Lead Management'
+  //       };
+  //     case 'booking_optimization':
+  //       return {
+  //         icon: Target,
+  //         iconBg: 'bg-success-light',
+  //         iconColor: 'text-success-default',
+  //         category: 'Booking Optimization'
+  //       };
+  //     case 'revenue_growth':
+  //       return {
+  //         icon: DollarSign,
+  //         iconBg: 'bg-warning-light',
+  //         iconColor: 'text-warning-default',
+  //         category: 'Revenue Growth'
+  //       };
+  //     case 'customer_retention':
+  //       return {
+  //         icon: Target,
+  //         iconBg: 'bg-info-light',
+  //         iconColor: 'text-info-default',
+  //         category: 'Customer Retention'
+  //       };
+  //     case 'efficiency':
+  //       return {
+  //         icon: Zap,
+  //         iconBg: 'bg-brand-accent/10',
+  //         iconColor: 'text-brand-accent',
+  //         category: 'Efficiency'
+  //       };
+  //     default:
+  //       return {
+  //         icon: Sparkles,
+  //         iconBg: 'bg-neutral-100',
+  //         iconColor: 'text-neutral-600',
+  //         category: 'General'
+  //       };
+  //   }
+  // };
 
-  const getPriorityConfig = (priority: AIRecommendation['priority']) => {
-    switch (priority) {
-      case 'high':
-        return {
-          color: 'text-error-default',
-          bg: 'bg-error-light',
-          label: 'High Priority'
-        };
-      case 'medium':
-        return {
-          color: 'text-warning-default',
-          bg: 'bg-warning-light',
-          label: 'Medium Priority'
-        };
-      case 'low':
-        return {
-          color: 'text-success-default',
-          bg: 'bg-success-light',
-          label: 'Low Priority'
-        };
-    }
-  };
+  // const _getPriorityConfig = (priority: AIRecommendation['priority']) => {
+  //   switch (priority) {
+  //     case 'high':
+  //       return {
+  //         color: 'text-error-default',
+  //         bg: 'bg-error-light',
+  //         label: 'High Priority'
+  //       };
+  //     case 'medium':
+  //       return {
+  //         color: 'text-warning-default',
+  //         bg: 'bg-warning-light',
+  //         label: 'Medium Priority'
+  //       };
+  //     case 'low':
+  //       return {
+  //         color: 'text-success-default',
+  //         bg: 'bg-success-light',
+  //         label: 'Low Priority'
+  //       };
+  //   }
+  // };
 
-  const getEffortConfig = (effort: AIRecommendation['effort']) => {
-    switch (effort) {
-      case 'low':
-        return { label: 'Quick Win', color: 'text-success-default' };
-      case 'medium':
-        return { label: 'Medium Effort', color: 'text-warning-default' };
-      case 'high':
-        return { label: 'High Effort', color: 'text-error-default' };
-    }
-  };
+  // const _getEffortConfig = (effort: AIRecommendation['effort']) => {
+  //   switch (effort) {
+  //     case 'low':
+  //       return { label: 'Quick Win', color: 'text-success-default' };
+  //     case 'medium':
+  //       return { label: 'Medium Effort', color: 'text-warning-default' };
+  //     case 'high':
+  //       return { label: 'High Effort', color: 'text-error-default' };
+  //   }
+  // };
 
   const handleActionClick = (recommendationId: string, actionType: 'primary' | 'secondary') => {
     setCompletedActions(prev => new Set(prev).add(`${recommendationId}-${actionType}`));
@@ -195,7 +182,7 @@ const AIRecommendations: React.FC<AIRecommendationsProps> = ({
 
         <CardContent className="space-y-4">
           <AnimatePresence>
-            {recommendations.map((recommendation, index) => {
+            {recommendations.map((recommendation) => {
               const isHighPriority = recommendation.priority === 'high';
               
               return (

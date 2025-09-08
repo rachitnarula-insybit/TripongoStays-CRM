@@ -12,7 +12,7 @@ import {
   X
 } from 'lucide-react';
 import Button from '@/components/ui/Button';
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/Card';
+import { Card } from '@/components/ui/Card';
 import { useReducedMotion, createMotionVariants, hapticFeedback } from '@/utils/motion';
 import { announceToScreenReader } from '@/utils/accessibility';
 import { cn } from '@/utils';

@@ -16,7 +16,6 @@ import ProfileHeader from '@/components/profile/ProfileHeader';
 import EngagementSummary from '@/components/profile/EngagementSummary';
 import ActivityTimeline from '@/components/profile/ActivityTimeline';
 import ProfileTabs from '@/components/profile/ProfileTabs';
-import { UserProfile } from '@/types';
 
 const ProfilePage: React.FC = () => {
   const router = useRouter();
@@ -101,7 +100,7 @@ const ProfilePage: React.FC = () => {
           {/* Header with back button */}
           <div className="mb-8">
             <Button
-              variant="outline"
+              variant="tertiary"
               onClick={handleBack}
               leftIcon={<ArrowLeft className="h-4 w-4" />}
               className="mb-4"
@@ -120,7 +119,7 @@ const ProfilePage: React.FC = () => {
                 {profileResponse?.message || 'The requested profile could not be found or loaded.'}
               </div>
               <div className="flex justify-center gap-3">
-                <Button onClick={handleBack} variant="outline">
+                <Button onClick={handleBack} variant="tertiary">
                   Go Back
                 </Button>
                 <Button onClick={() => refetch()} leftIcon={<RefreshCw className="h-4 w-4" />}>
@@ -141,7 +140,7 @@ const ProfilePage: React.FC = () => {
         {/* Header Actions */}
         <div className="flex items-center justify-between mb-8">
           <Button
-            variant="outline"
+            variant="tertiary"
             onClick={handleBack}
             leftIcon={<ArrowLeft className="h-4 w-4" />}
           >
@@ -175,7 +174,7 @@ const ProfilePage: React.FC = () => {
 
             {/* Action Buttons */}
             <Button
-              variant="outline"
+              variant="tertiary"
               onClick={handleShare}
               leftIcon={<Share2 className="h-4 w-4" />}
               size="sm"
@@ -184,7 +183,7 @@ const ProfilePage: React.FC = () => {
             </Button>
             
             <Button
-              variant="outline"
+              variant="tertiary"
               onClick={handleExport}
               leftIcon={<Download className="h-4 w-4" />}
               size="sm"
@@ -193,7 +192,7 @@ const ProfilePage: React.FC = () => {
             </Button>
 
             <Button
-              variant="outline"
+              variant="tertiary"
               leftIcon={<Bell className="h-4 w-4" />}
               size="sm"
             >

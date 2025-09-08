@@ -1,22 +1,18 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import React, { useState } from 'react';
+import { motion } from 'framer-motion';
 import {
   TrendingUp,
   TrendingDown,
   BarChart3,
   LineChart,
-  PieChart,
+  RefreshCw,
   Activity,
   Calendar,
-  Filter,
   Download,
-  Maximize2,
-  RefreshCw,
 } from 'lucide-react';
 import { cn } from '@/utils';
-import { useReducedMotion, createMotionVariants } from '@/utils/motion';
 import Button from '@/components/ui/Button';
 import FuturisticCard from '@/components/ui/FuturisticCard';
 
@@ -55,8 +51,6 @@ const TrendAnalysisChart: React.FC = () => {
   const [selectedMetric, setSelectedMetric] = useState('revenue');
   const [timeRange, setTimeRange] = useState('6m');
   const [isLoading, setIsLoading] = useState(false);
-  const reducedMotion = useReducedMotion();
-  const motionVariants = createMotionVariants(reducedMotion);
 
   const handleRefresh = () => {
     setIsLoading(true);

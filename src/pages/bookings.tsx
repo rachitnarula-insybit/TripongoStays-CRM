@@ -177,8 +177,8 @@ const BookingsPage: React.FC = () => {
       render: (value, booking) => (
         <div>
           <div className="font-medium text-neutral-black">{value}</div>
-          <div className="text-sm text-neutral-gray">{booking.guestEmail}</div>
-          <div className="text-sm text-neutral-gray">{booking.guestPhone}</div>
+          <div className="text-sm text-neutral-gray">{booking?.guestEmail}</div>
+          <div className="text-sm text-neutral-gray">{booking?.guestPhone}</div>
         </div>
       ),
     },
@@ -190,7 +190,7 @@ const BookingsPage: React.FC = () => {
         <div>
           <div className="font-medium text-neutral-black">{value}</div>
           <div className="text-sm text-neutral-gray">
-            {booking.nights} nights • {booking.guests} guests
+            {booking?.nights} nights • {booking?.guests} guests
           </div>
         </div>
       ),
@@ -205,7 +205,7 @@ const BookingsPage: React.FC = () => {
             <strong>Check-in:</strong> {formatDate(String(value))}
           </div>
           <div className="text-sm">
-            <strong>Check-out:</strong> {formatDate(String(booking.checkOutDate))}
+            <strong>Check-out:</strong> {formatDate(String(booking?.checkOutDate))}
           </div>
         </div>
       ),
@@ -247,8 +247,8 @@ const BookingsPage: React.FC = () => {
         <div className="flex space-x-2">
           <Button
             size="sm"
-            variant="outline"
-            onClick={() => handleViewProfile(booking)}
+            variant="tertiary"
+            onClick={() => booking && handleViewProfile(booking)}
             leftIcon={<UserCircle className="h-3 w-3" />}
             className="text-gray-600 border-gray-300 hover:bg-gray-50"
           >
@@ -256,16 +256,16 @@ const BookingsPage: React.FC = () => {
           </Button>
           <Button
             size="sm"
-            variant="outline"
-            onClick={() => handleViewDetails(booking)}
+            variant="tertiary"
+            onClick={() => booking && handleViewDetails(booking)}
             leftIcon={<Eye className="h-3 w-3" />}
           >
             View
           </Button>
           <Button
             size="sm"
-            variant="outline"
-            onClick={() => handleGenerateInvoice(booking)}
+            variant="tertiary"
+            onClick={() => booking && handleGenerateInvoice(booking)}
             leftIcon={<FileText className="h-3 w-3" />}
             className="text-primary-orange border-primary-orange hover:bg-orange-50"
           >
@@ -282,7 +282,7 @@ const BookingsPage: React.FC = () => {
         <div className="text-center">
           <p className="text-secondary-red">Failed to load bookings</p>
           <Button
-            variant="outline"
+            variant="tertiary"
             onClick={() => window.location.reload()}
             className="mt-2"
           >
@@ -303,7 +303,7 @@ const BookingsPage: React.FC = () => {
         </div>
         <div className="flex items-center space-x-2">
           <Button
-            variant="outline"
+            variant="tertiary"
             onClick={() => setShowFilters(!showFilters)}
             leftIcon={<Filter className="h-4 w-4" />}
             className={hasActiveFilters ? 'border-primary-orange text-primary-orange' : ''}
@@ -339,7 +339,7 @@ const BookingsPage: React.FC = () => {
             </CardTitle>
             {hasActiveFilters && (
               <Button
-                variant="outline"
+                variant="tertiary"
                 size="sm"
                 onClick={handleClearFilters}
                 leftIcon={<X className="h-4 w-4" />}
@@ -525,7 +525,7 @@ const BookingsPage: React.FC = () => {
             {/* Actions */}
             <div className="flex justify-end space-x-3 pt-4 border-t">
               <Button
-                variant="outline"
+                variant="tertiary"
                 onClick={() => setIsDetailsModalOpen(false)}
               >
                 Close

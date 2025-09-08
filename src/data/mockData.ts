@@ -4,9 +4,6 @@ import {
   CallRecord, 
   Booking, 
   Property, 
-  DashboardStats, 
-  LeadConversionData, 
-  CityDemandData 
 } from '@/types';
 
 // Mock Users
@@ -311,35 +308,7 @@ export const mockBookings: Booking[] = [
 ];
 
 // Mock Dashboard Stats
-export const mockDashboardStats: DashboardStats = {
-  totalBookings: 156,
-  totalProperties: 23,
-  totalLeads: 89,
-  revenue: 2450000,
-  revenueGrowth: 12.5,
-  bookingsGrowth: 8.3,
-  leadsGrowth: 15.7,
-  propertiesGrowth: 4.2,
-};
-
-// Mock Lead Conversion Data
-export const mockLeadConversionData: LeadConversionData[] = [
-  { stage: 'New Leads', count: 45, percentage: 100, color: '#2F80ED' },
-  { stage: 'Contacted', count: 38, percentage: 84, color: '#F4A261' },
-  { stage: 'Qualified', count: 28, percentage: 62, color: '#EC6B2F' },
-  { stage: 'Proposal', count: 18, percentage: 40, color: '#27AE60' },
-  { stage: 'Closed', count: 12, percentage: 27, color: '#27AE60' },
-];
-
-// Mock City Demand Data
-export const mockCityDemandData: CityDemandData[] = [
-  { city: 'Goa', bookings: 45, revenue: 850000 },
-  { city: 'Udaipur', bookings: 38, revenue: 720000 },
-  { city: 'Kerala', bookings: 32, revenue: 580000 },
-  { city: 'Jaipur', bookings: 28, revenue: 520000 },
-  { city: 'Manali', bookings: 24, revenue: 450000 },
-  { city: 'Shimla', bookings: 20, revenue: 380000 },
-];
+// Removed unused mock data exports to fix ESLint errors
 
 // Mock login credentials
 export const mockCredentials = {

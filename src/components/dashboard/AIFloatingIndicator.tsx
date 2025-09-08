@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Brain, Zap, TrendingUp, AlertCircle, CheckCircle } from 'lucide-react';
+import { Brain, Zap, AlertCircle, CheckCircle } from 'lucide-react';
 import { cn } from '@/utils';
 
 interface AIFloatingIndicatorProps {
@@ -9,7 +9,6 @@ interface AIFloatingIndicatorProps {
 
 const AIFloatingIndicator: React.FC<AIFloatingIndicatorProps> = ({ className }) => {
   const [status, setStatus] = useState<'analyzing' | 'insights' | 'ready' | 'alert'>('analyzing');
-  const [pulseCount, setPulseCount] = useState(0);
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -17,7 +16,6 @@ const AIFloatingIndicator: React.FC<AIFloatingIndicatorProps> = ({ className }) 
       const currentIndex = statuses.indexOf(status);
       const nextIndex = (currentIndex + 1) % statuses.length;
       setStatus(statuses[nextIndex]);
-      setPulseCount(prev => prev + 1);
     }, 4000);
 
     return () => clearInterval(interval);

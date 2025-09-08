@@ -112,7 +112,7 @@ const NotContactedLeads: React.FC<NotContactedLeadsProps> = ({ leads, isLoading 
                   <div className="flex space-x-2">
                     <Button
                       size="sm"
-                      variant="outline"
+                      variant="tertiary"
                       onClick={() => handleWhatsApp(lead)}
                       leftIcon={<MessageCircle className="h-4 w-4" />}
                       className="text-secondary-green border-secondary-green hover:bg-green-50"
@@ -121,7 +121,7 @@ const NotContactedLeads: React.FC<NotContactedLeadsProps> = ({ leads, isLoading 
                     </Button>
                     <Button
                       size="sm"
-                      variant="outline"
+                      variant="tertiary"
                       onClick={() => handleCall(lead)}
                       leftIcon={<Phone className="h-4 w-4" />}
                       className="text-secondary-blue border-secondary-blue hover:bg-blue-50"

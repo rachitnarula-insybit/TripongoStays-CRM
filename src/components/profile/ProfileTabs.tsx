@@ -4,10 +4,7 @@ import {
   Phone,
   Calendar,
   FileText,
-  Settings,
-  Activity,
-  MessageCircle,
-  DollarSign
+  Activity
 } from 'lucide-react';
 import { UserProfile } from '@/types';
 import { Card, CardContent } from '@/components/ui/Card';
@@ -61,30 +58,30 @@ const ProfileTabs: React.FC<ProfileTabsProps> = ({ profile }) => {
       key: 'date',
       label: 'Date & Time',
       sortable: true,
-      render: (value: any) => (
+      render: (value: string | number | undefined) => (
         <div>
-          <div className="font-medium text-gray-900">{formatDate(value)}</div>
-          <div className="text-sm text-gray-500">{formatDateTime(value).split(' ')[1]}</div>
+          <div className="font-medium text-gray-900">{formatDate(String(value))}</div>
+          <div className="text-sm text-gray-500">{formatDateTime(String(value)).split(' ')[1]}</div>
         </div>
       ),
     },
     {
       key: 'type',
       label: 'Type',
-      render: (value: any) => (
+      render: (value: string | number | undefined) => (
         <Badge variant={value === 'Incoming' ? 'info' : 'success'} size="sm">
-          {value}
+          {String(value)}
         </Badge>
       ),
     },
     {
       key: 'status',
       label: 'Status',
-      render: (value: any) => {
+      render: (value: string | number | undefined) => {
         const color = value === 'Connected' ? 'success' : 'error';
         return (
           <Badge variant={color} size="sm">
-            {value}
+            {String(value)}
           </Badge>
         );
       },
@@ -92,15 +89,15 @@ const ProfileTabs: React.FC<ProfileTabsProps> = ({ profile }) => {
     {
       key: 'duration',
       label: 'Duration',
-      render: (value: any) => (
-        <span className="font-mono text-sm">{formatDuration(value)}</span>
+      render: (value: string | number | undefined) => (
+        <span className="font-mono text-sm">{formatDuration(Number(value))}</span>
       ),
     },
     {
       key: 'result',
       label: 'Result',
-      render: (value: any) => (
-        <span className="text-sm text-gray-600">{value}</span>
+      render: (value: string | number | undefined) => (
+        <span className="text-sm text-gray-600">{String(value)}</span>
       ),
     },
   ];
@@ -109,45 +106,45 @@ const ProfileTabs: React.FC<ProfileTabsProps> = ({ profile }) => {
     {
       key: 'bookingReference',
       label: 'Reference',
-      render: (value: any) => (
-        <span className="font-mono text-sm font-medium">{value}</span>
+      render: (value: string | number | undefined) => (
+        <span className="font-mono text-sm font-medium">{String(value)}</span>
       ),
     },
     {
       key: 'propertyName',
       label: 'Property',
-      render: (value: any) => (
-        <span className="font-medium text-gray-900">{value}</span>
+      render: (value: string | number | undefined) => (
+        <span className="font-medium text-gray-900">{String(value)}</span>
       ),
     },
     {
       key: 'checkInDate',
       label: 'Check-in',
-      render: (value: any) => formatDate(value),
+      render: (value: string | number | undefined) => formatDate(String(value)),
     },
     {
       key: 'nights',
       label: 'Nights',
-      render: (value: any) => `${value} nights`,
+      render: (value: string | number | undefined) => `${value} nights`,
     },
     {
       key: 'totalAmount',
       label: 'Amount',
-      render: (value: any) => (
+      render: (value: string | number | undefined) => (
         <span className="font-semibold text-green-600">
-          {formatCurrency(value)}
+          {formatCurrency(Number(value))}
         </span>
       ),
     },
     {
       key: 'status',
       label: 'Status',
-      render: (value: any) => {
-        const color = value === 'Confirmed' ? 'success' : 
+      render: (value: string | number | undefined) => {
+        const color = value === 'Confirmed' ? 'success' :
                     value === 'Pending' ? 'warning' : 'error';
         return (
           <Badge variant={color} size="sm">
-            {value}
+            {String(value)}
           </Badge>
         );
       },

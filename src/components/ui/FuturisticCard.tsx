@@ -4,7 +4,7 @@ import { cn } from '@/utils';
 import { useReducedMotion } from '@/utils/motion';
 import FuturisticGradient from './FuturisticGradient';
 
-interface FuturisticCardProps extends React.HTMLAttributes<HTMLDivElement> {
+interface FuturisticCardProps extends Omit<React.HTMLAttributes<HTMLDivElement>, 'onAnimationStart' | 'onAnimationEnd' | 'onAnimationIteration' | 'onDragStart' | 'onDrag' | 'onDragEnd' | 'onDragEnter' | 'onDragExit' | 'onDragLeave' | 'onDragOver' | 'onDrop'> {
   variant?: 'glass' | 'solid' | 'gradient';
   gradientType?: 'neon' | 'electric' | 'cyber' | 'plasma' | 'aurora';
   intensity?: 'subtle' | 'medium' | 'strong';

@@ -123,7 +123,7 @@ const Card = React.forwardRef<HTMLDivElement, CardProps>(
 
 Card.displayName = 'Card';
 
-interface CardHeaderProps extends React.HTMLAttributes<HTMLDivElement> {
+interface CardHeaderProps extends Omit<React.HTMLAttributes<HTMLDivElement>, 'onAnimationStart' | 'onAnimationEnd' | 'onAnimationIteration' | 'onDragStart' | 'onDrag' | 'onDragEnd' | 'onDragEnter' | 'onDragExit' | 'onDragLeave' | 'onDragOver' | 'onDrop'> {
   children: React.ReactNode;
   padding?: 'none' | 'sm' | 'md' | 'lg';
 }
@@ -170,8 +170,6 @@ interface CardTitleProps extends React.HTMLAttributes<HTMLHeadingElement> {
 
 const CardTitle = React.forwardRef<HTMLHeadingElement, CardTitleProps>(
   ({ className, children, level = 3, size = 'md', ...props }, ref) => {
-    const Component = `h${level}` as keyof JSX.IntrinsicElements;
-    
     const sizes = {
       sm: 'text-sm font-medium',
       md: 'text-base font-semibold',
@@ -179,26 +177,35 @@ const CardTitle = React.forwardRef<HTMLHeadingElement, CardTitleProps>(
       xl: 'text-xl font-bold',
     };
 
-    return (
-      <Component
-        ref={ref as any}
-        className={cn(
-          'text-neutral-900 leading-tight tracking-tight',
-          'text-balance',
-          sizes[size],
-          className
-        )}
-        {...props}
-      >
-        {children}
-      </Component>
+    const baseClassName = cn(
+      'text-neutral-900 leading-tight tracking-tight',
+      'text-balance',
+      sizes[size],
+      className
     );
+
+    switch (level) {
+      case 1:
+        return <h1 ref={ref} className={baseClassName} {...props}>{children}</h1>;
+      case 2:
+        return <h2 ref={ref} className={baseClassName} {...props}>{children}</h2>;
+      case 3:
+        return <h3 ref={ref} className={baseClassName} {...props}>{children}</h3>;
+      case 4:
+        return <h4 ref={ref} className={baseClassName} {...props}>{children}</h4>;
+      case 5:
+        return <h5 ref={ref} className={baseClassName} {...props}>{children}</h5>;
+      case 6:
+        return <h6 ref={ref} className={baseClassName} {...props}>{children}</h6>;
+      default:
+        return <h3 ref={ref} className={baseClassName} {...props}>{children}</h3>;
+    }
   }
 );
 
 CardTitle.displayName = 'CardTitle';
 
-interface CardDescriptionProps extends React.HTMLAttributes<HTMLParagraphElement> {
+interface CardDescriptionProps extends Omit<React.HTMLAttributes<HTMLParagraphElement>, 'onAnimationStart' | 'onAnimationEnd' | 'onAnimationIteration' | 'onDragStart' | 'onDrag' | 'onDragEnd' | 'onDragEnter' | 'onDragExit' | 'onDragLeave' | 'onDragOver' | 'onDrop'> {
   children: React.ReactNode;
   size?: 'sm' | 'md';
 }
@@ -236,7 +243,7 @@ const CardDescription = React.forwardRef<HTMLParagraphElement, CardDescriptionPr
 
 CardDescription.displayName = 'CardDescription';
 
-interface CardContentProps extends React.HTMLAttributes<HTMLDivElement> {
+interface CardContentProps extends Omit<React.HTMLAttributes<HTMLDivElement>, 'onAnimationStart' | 'onAnimationEnd' | 'onAnimationIteration' | 'onDragStart' | 'onDrag' | 'onDragEnd' | 'onDragEnter' | 'onDragExit' | 'onDragLeave' | 'onDragOver' | 'onDrop'> {
   children: React.ReactNode;
   padding?: 'none' | 'sm' | 'md' | 'lg';
 }
@@ -271,7 +278,7 @@ const CardContent = React.forwardRef<HTMLDivElement, CardContentProps>(
 
 CardContent.displayName = 'CardContent';
 
-interface CardFooterProps extends React.HTMLAttributes<HTMLDivElement> {
+interface CardFooterProps extends Omit<React.HTMLAttributes<HTMLDivElement>, 'onAnimationStart' | 'onAnimationEnd' | 'onAnimationIteration' | 'onDragStart' | 'onDrag' | 'onDragEnd' | 'onDragEnter' | 'onDragExit' | 'onDragLeave' | 'onDragOver' | 'onDrop'> {
   children: React.ReactNode;
   padding?: 'none' | 'sm' | 'md' | 'lg';
   justify?: 'start' | 'center' | 'end' | 'between';

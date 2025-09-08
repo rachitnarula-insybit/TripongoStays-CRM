@@ -94,7 +94,7 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
   const abortControllerRef = useRef<AbortController | null>(null);
 
   // Mock AI response function - replace with actual API call
-  const generateAIResponse = async (userMessage: string): Promise<string> => {
+  const generateAIResponse = async (): Promise<string> => {
     // Simulate API delay
     await new Promise(resolve => setTimeout(resolve, 1000 + Math.random() * 2000));
     
@@ -146,7 +146,7 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
       abortControllerRef.current = new AbortController();
       
       // Generate AI response
-      const aiResponse = await generateAIResponse(content);
+      const aiResponse = await generateAIResponse();
       
       // Update the loading message with actual content
       dispatch({

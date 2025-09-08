@@ -129,7 +129,7 @@ const LeadsPage: React.FC = () => {
     }
     
     return result;
-  }, [localLeads, leadsResponse?.data, searchTerm, sortKey, sortDirection]);
+  }, [localLeads, leadsResponse?.data, searchTerm, sortKey, sortDirection, filters.assignedTo, filters.source, filters.status]);
 
   const debouncedSearch = debounce((value: string) => {
     setSearchTerm(value);
@@ -328,8 +328,8 @@ const LeadsPage: React.FC = () => {
       render: (value, lead) => (
         <div>
           <div className="font-medium text-neutral-black">{value}</div>
-          <div className="text-sm text-neutral-gray">{lead.email}</div>
-          <div className="text-sm text-neutral-gray">{lead.phone}</div>
+          <div className="text-sm text-neutral-gray">{lead?.email}</div>
+          <div className="text-sm text-neutral-gray">{lead?.phone}</div>
         </div>
       ),
     },
@@ -346,7 +346,7 @@ const LeadsPage: React.FC = () => {
     {
       key: 'status',
       label: 'Status',
-      render: (_, lead) => <StatusDropdown lead={lead} />,
+      render: (_, lead) => lead ? <StatusDropdown lead={lead} /> : null,
     },
     {
       key: 'priority',
@@ -361,7 +361,7 @@ const LeadsPage: React.FC = () => {
     {
       key: 'assignedTo',
       label: 'Assigned To',
-      render: (_, lead) => <AssignmentDropdown lead={lead} />,
+      render: (_, lead) => lead ? <AssignmentDropdown lead={lead} /> : null,
     },
     {
       key: 'expectedRevenue',
@@ -383,7 +383,7 @@ const LeadsPage: React.FC = () => {
           <Button
             size="sm"
             variant="secondary"
-            onClick={() => handleViewProfile(lead)}
+            onClick={() => lead && handleViewProfile(lead)}
             leftIcon={<Eye className="h-3 w-3" />}
             className="text-gray-600 border-gray-300 hover:bg-gray-50 flex-shrink-0"
           >
@@ -392,7 +392,7 @@ const LeadsPage: React.FC = () => {
           <Button
             size="sm"
             variant="success"
-            onClick={() => handleWhatsApp(lead)}
+            onClick={() => lead && handleWhatsApp(lead)}
             leftIcon={<MessageCircle className="h-3 w-3" />}
             className="flex-shrink-0"
           >
@@ -401,7 +401,7 @@ const LeadsPage: React.FC = () => {
           <Button
             size="sm"
             variant="secondary"
-            onClick={() => handleCall(lead)}
+            onClick={() => lead && handleCall(lead)}
             leftIcon={<Phone className="h-3 w-3" />}
             className="text-blue-600 border-blue-300 hover:bg-blue-50 hover:border-blue-400 flex-shrink-0"
           >

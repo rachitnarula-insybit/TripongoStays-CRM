@@ -1,7 +1,7 @@
 import React, { useState, useRef } from 'react';
 import { motion, HTMLMotionProps } from 'framer-motion';
 import { cn } from '@/utils';
-import { useReducedMotion, createMotionVariants } from '@/utils/motion';
+import { useReducedMotion } from '@/utils/motion';
 
 interface InputProps extends Omit<HTMLMotionProps<"input">, 'size'> {
   label?: string;
@@ -39,7 +39,6 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
   }, ref) => {
     const [isFocused, setIsFocused] = useState(false);
     const reducedMotion = useReducedMotion();
-    const motionVariants = createMotionVariants(reducedMotion);
     const inputRef = useRef<HTMLInputElement>(null);
     const combinedRef = (ref as React.RefObject<HTMLInputElement>) || inputRef;
 

@@ -81,7 +81,7 @@ const navigationItems = [
   },
 ];
 
-const Sidebar: React.FC<SidebarProps> = ({ isOpen, isCollapsed = false, onToggle, onCollapse }) => {
+const Sidebar: React.FC<SidebarProps> = ({ isOpen, isCollapsed = false, onToggle }) => {
   const router = useRouter();
   const pathname = usePathname();
   const { logout, user } = useAuth();

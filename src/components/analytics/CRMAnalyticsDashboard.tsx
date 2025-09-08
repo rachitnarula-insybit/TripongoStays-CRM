@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   BarChart3,
@@ -9,32 +9,25 @@ import {
   Phone,
   Calendar,
   Target,
-  Activity,
-  Zap,
-  Clock,
-  Award,
   Filter,
-  Download,
   RefreshCw,
-  Eye,
-  AlertCircle,
-  CheckCircle,
-  Star,
-  Building,
-  MapPin,
   UserCheck,
   PhoneCall,
   MessageSquare,
   BookOpen,
   TrendingUp,
   TrendingUp as TrendingUpIcon,
+  Building,
+  Zap,
+  Clock,
+  Award,
 } from 'lucide-react';
 import { cn } from '@/utils';
 import { useReducedMotion, createMotionVariants, hapticFeedback } from '@/utils/motion';
 import Button from '@/components/ui/Button';
 import FuturisticCard from '@/components/ui/FuturisticCard';
 import { dashboardApi, leadsApi, callHistoryApi, bookingsApi, usersApi } from '@/services/api';
-import { Lead, CallRecord, Booking, User, DashboardStats } from '@/types';
+import { Lead, CallRecord, Booking, DashboardStats } from '@/types';
 
 interface CRMMetric {
   id: string;
@@ -76,73 +69,24 @@ const CRMAnalyticsDashboard: React.FC = () => {
   const reducedMotion = useReducedMotion();
   const motionVariants = createMotionVariants(reducedMotion);
 
-  // Fetch and calculate CRM metrics
-  useEffect(() => {
-    const fetchCRMData = async () => {
-      setLoading(true);
-      try {
-        const [dashStats, leadsData, callsData, bookingsData, usersData] = await Promise.all([
-          dashboardApi.getStats(),
-          leadsApi.getLeads(1, 1000),
-          callHistoryApi.getCallHistory(1, 1000),
-          bookingsApi.getBookings(1, 1000),
-          usersApi.getUsers(1, 100)
-        ]);
-
-        const stats = dashStats.data || {
-          totalBookings: 0, totalProperties: 0, totalLeads: 0, revenue: 0,
-          revenueGrowth: 0, bookingsGrowth: 0, leadsGrowth: 0, propertiesGrowth: 0
-        };
-        const leads = leadsData.data || [];
-        const calls = callsData.data || [];
-        const bookings = bookingsData.data || [];
-        const users = usersData.data || [];
-
-        // Calculate comprehensive metrics
-        const calculatedMetrics = calculateCRMMetrics(stats, leads, calls, bookings, users);
-        setMetrics(calculatedMetrics);
-
-        // Update real-time data based on actual data
-        setRealTimeData({
-          activeLeads: leads.filter(l => ['New', 'Hot', 'Follow-up'].includes(l.status)).length,
-          todayRevenue: calculateTodayRevenue(bookings),
-          activeCalls: calls.filter(c => c.status === 'Connected').length,
-          onlineAgents: users.filter(u => u.isActive && u.role === 'agent').length
-        });
-
-      } catch (error) {
-        console.error('Error fetching CRM data:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchCRMData();
-  }, [filters.dateRange]);
-
-
-  const calculateCRMMetrics = (
+  const calculateCRMMetrics = useCallback((
     stats: DashboardStats,
     leads: Lead[],
     calls: CallRecord[],
-    bookings: Booking[],
-    users: User[]
+    bookings: Booking[]
   ): CRMMetric[] => {
     // Revenue Metrics
     const totalRevenue = stats.revenue;
     const avgBookingValue = bookings.length > 0 ? totalRevenue / bookings.length : 0;
-    const confirmedBookings = bookings.filter(b => b.status === 'Confirmed');
-    const conversionRate = leads.length > 0 ? (confirmedBookings.length / leads.length) * 100 : 0;
-
+    // const confirmedBookings = bookings.filter(b => b.status === 'Confirmed');
     // Lead Metrics
-    const newLeads = leads.filter(l => l.status === 'New').length;
     const hotLeads = leads.filter(l => l.status === 'Hot').length;
     const convertedLeads = leads.filter(l => l.status === 'Converted').length;
     const leadConversionRate = leads.length > 0 ? (convertedLeads / leads.length) * 100 : 0;
 
     // Call Metrics
     const connectedCalls = calls.filter(c => c.status === 'Connected');
-    const avgCallDuration = connectedCalls.length > 0 ? 
+    const avgCallDuration = connectedCalls.length > 0 ?
       connectedCalls.reduce((sum, c) => sum + c.duration, 0) / connectedCalls.length : 0;
     const callSuccessRate = calls.length > 0 ? (connectedCalls.length / calls.length) * 100 : 0;
 
@@ -153,7 +97,7 @@ const CRMAnalyticsDashboard: React.FC = () => {
 
     // Property Metrics
     const occupancyRate = calculateOccupancyRate(bookings);
-    const avgStayDuration = bookings.length > 0 ? 
+    const avgStayDuration = bookings.length > 0 ?
       bookings.reduce((sum, b) => sum + b.nights, 0) / bookings.length : 0;
 
     return [
@@ -341,7 +285,52 @@ const CRMAnalyticsDashboard: React.FC = () => {
         category: 'customer'
       }
     ];
-  };
+  }, []);
+
+  // Fetch and calculate CRM metrics
+  useEffect(() => {
+    const fetchCRMData = async () => {
+      setLoading(true);
+      try {
+        const [dashStats, leadsData, callsData, bookingsData, usersData] = await Promise.all([
+          dashboardApi.getStats(),
+          leadsApi.getLeads(1, 1000),
+          callHistoryApi.getCallHistory(1, 1000),
+          bookingsApi.getBookings(1, 1000),
+          usersApi.getUsers(1, 100)
+        ]);
+
+        const stats = dashStats.data || {
+          totalBookings: 0, totalProperties: 0, totalLeads: 0, revenue: 0,
+          revenueGrowth: 0, bookingsGrowth: 0, leadsGrowth: 0, propertiesGrowth: 0
+        };
+        const leads = leadsData.data || [];
+        const calls = callsData.data || [];
+        const bookings = bookingsData.data || [];
+        const users = usersData.data || [];
+
+        // Calculate comprehensive metrics
+        const calculatedMetrics = calculateCRMMetrics(stats, leads, calls, bookings);
+        setMetrics(calculatedMetrics);
+
+        // Update real-time data based on actual data
+        setRealTimeData({
+          activeLeads: leads.filter(l => ['New', 'Hot', 'Follow-up'].includes(l.status)).length,
+          todayRevenue: calculateTodayRevenue(bookings),
+          activeCalls: calls.filter(c => c.status === 'Connected').length,
+          onlineAgents: users.filter(u => u.isActive && u.role === 'agent').length
+        });
+
+      } catch (error) {
+        console.error('Error fetching CRM data:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchCRMData();
+  }, [filters.dateRange, calculateCRMMetrics]);
+
 
   const calculateTodayRevenue = (bookings: Booking[]): number => {
     const today = new Date().toISOString().split('T')[0];
@@ -502,7 +491,7 @@ const CRMAnalyticsDashboard: React.FC = () => {
           {['7d', '30d', '90d', '1y'].map((period) => (
             <motion.button
               key={period}
-              onClick={() => setFilters(prev => ({ ...prev, dateRange: period as any }))}
+              onClick={() => setFilters(prev => ({ ...prev, dateRange: period as typeof filters.dateRange }))}
               className={cn(
                 'px-3 py-1 rounded-lg text-sm font-medium transition-all duration-200',
                 filters.dateRange === period
@@ -528,7 +517,7 @@ const CRMAnalyticsDashboard: React.FC = () => {
           ].map((category) => (
             <motion.button
               key={category.id}
-              onClick={() => setFilters(prev => ({ ...prev, category: category.id as any }))}
+              onClick={() => setFilters(prev => ({ ...prev, category: category.id as typeof filters.category }))}
               className={cn(
                 'px-3 py-1 rounded-lg text-sm font-medium transition-all duration-200',
                 filters.category === category.id

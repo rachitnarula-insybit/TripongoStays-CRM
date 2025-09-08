@@ -188,7 +188,7 @@ const UsersPage: React.FC = () => {
       render: (value, user) => (
         <div className="flex items-center space-x-3">
           <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary-soft-orange text-white text-sm font-medium">
-            {user.name.charAt(0)}
+            {user?.name?.charAt(0) || '?'}
           </div>
           <span className="font-medium">{value}</span>
         </div>
@@ -239,16 +239,16 @@ const UsersPage: React.FC = () => {
         <div className="flex space-x-2">
           <Button
             size="sm"
-            variant="outline"
-            onClick={() => handleEditUser(user)}
+            variant="tertiary"
+            onClick={() => user && handleEditUser(user)}
             leftIcon={<Edit className="h-3 w-3" />}
           >
             Edit
           </Button>
           <Button
             size="sm"
-            variant="outline"
-            onClick={() => handleDeleteUser(user)}
+            variant="tertiary"
+            onClick={() => user && handleDeleteUser(user)}
             leftIcon={<Trash2 className="h-3 w-3" />}
             className="text-secondary-red border-secondary-red hover:bg-red-50"
           >
@@ -265,7 +265,7 @@ const UsersPage: React.FC = () => {
         <div className="text-center">
           <p className="text-secondary-red">Failed to load users</p>
           <Button
-            variant="outline"
+            variant="tertiary"
             onClick={() => queryClient.invalidateQueries({ queryKey: ['users'] })}
             className="mt-2"
           >

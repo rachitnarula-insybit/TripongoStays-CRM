@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { MessageCircle, Sparkles, ChevronRight } from 'lucide-react';
 import { cn } from '@/utils';
 import { useChatContext } from '@/contexts/ChatContext';
-import { useReducedMotion, createMotionVariants, hapticFeedback } from '@/utils/motion';
+import { useReducedMotion, hapticFeedback } from '@/utils/motion';
 
 interface AIChatLauncherProps {
   isCollapsed?: boolean;
@@ -18,7 +18,6 @@ const AIChatLauncher: React.FC<AIChatLauncherProps> = ({
 }) => {
   const { state, toggleChat } = useChatContext();
   const reducedMotion = useReducedMotion();
-  const motionVariants = createMotionVariants(reducedMotion);
 
   const handleClick = () => {
     hapticFeedback.medium();

@@ -55,7 +55,7 @@ const Pagination: React.FC<PaginationProps> = ({
     <div className={cn('flex items-center justify-center space-x-1', className)}>
       {/* Previous button */}
       <Button
-        variant="outline"
+        variant="tertiary"
         size="sm"
         onClick={() => onPageChange(currentPage - 1)}
         disabled={currentPage === 1}
@@ -100,7 +100,7 @@ const Pagination: React.FC<PaginationProps> = ({
 
       {/* Next button */}
       <Button
-        variant="outline"
+        variant="tertiary"
         size="sm"
         onClick={() => onPageChange(currentPage + 1)}
         disabled={currentPage === totalPages}

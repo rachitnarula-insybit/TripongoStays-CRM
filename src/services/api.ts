@@ -14,18 +14,12 @@ import {
   BookingFilters,
   UserProfile,
   ProfileActivity,
-  ProfileFilters
+  ProfileFilters,
+  BackendLeadData,
+  BackendBookingData,
+  CallAnalysisResponse
 } from '@/types';
-import {
-  mockUsers,
-  mockLeads,
-  mockCallRecords,
-  mockBookings,
-  mockProperties,
-  mockDashboardStats,
-  mockLeadConversionData,
-  mockCityDemandData,
-} from '@/data/mockData';
+// Mock data is defined inline where needed
 
 // -----------------------------
 // Data transformation helpers
@@ -39,8 +33,8 @@ function transformBackendData(data: unknown, endpoint: string): unknown {
 
   // Special-case /user/login which often returns { user, token }
   if (baseEndpoint.includes('/user/login')) {
-    if (typeof data === 'object' && data !== null && 'user' in (data as any)) {
-      const d = data as any;
+    if (typeof data === 'object' && data !== null && 'user' in (data as Record<string, unknown>)) {
+      const d = data as Record<string, unknown>;
       return {
         ...d,
         user: transformUserData(d.user as Record<string, unknown>),
@@ -55,8 +49,8 @@ function transformBackendData(data: unknown, endpoint: string): unknown {
     if (Array.isArray(data)) {
       return data.map(item => transformUserData(item as Record<string, unknown>));
     } else if (typeof data === 'object' && data !== null) {
-      if ('user' in (data as any)) {
-        const d = data as any;
+      if ('user' in (data as Record<string, unknown>)) {
+        const d = data as Record<string, unknown>;
         return {
           ...d,
           user: transformUserData(d.user as Record<string, unknown>),
@@ -71,8 +65,8 @@ function transformBackendData(data: unknown, endpoint: string): unknown {
     if (Array.isArray(data)) {
       return data.map(item => transformBookingData(item as Record<string, unknown>));
     } else if (typeof data === 'object' && data !== null) {
-      if ('booking' in (data as any)) {
-        const d = data as any;
+      if ('booking' in (data as Record<string, unknown>)) {
+        const d = data as Record<string, unknown>;
         return {
           ...d,
           booking: transformBookingData(d.booking as Record<string, unknown>),
@@ -85,11 +79,11 @@ function transformBackendData(data: unknown, endpoint: string): unknown {
   // Transform enquiry/leads data - FIXED to handle nested structure
   if (baseEndpoint.includes('/enquiry/leads') || baseEndpoint.includes('/enquiry/getenquiries')) {
     if (typeof data === 'object' && data !== null) {
-      const d = data as any;
+      const d = data as Record<string, unknown> & { leads?: BackendLeadData[] };
       
       // If data has a 'leads' property, extract and transform the leads array
       if ('leads' in d && Array.isArray(d.leads)) {
-        const transformedLeads = d.leads.map((lead: any) => transformLeadData(lead));
+        const transformedLeads = d.leads.map((lead: BackendLeadData) => transformLeadData(lead));
         
         return {
           ...d,
@@ -112,34 +106,31 @@ function transformBackendData(data: unknown, endpoint: string): unknown {
 }
 
 // Add a new transform function for lead data
-function transformLeadData(backendLead: Record<string, unknown>): any {
+function transformLeadData(backendLead: BackendLeadData): Lead {
   // Handle the nested leadName structure
-  const leadName = backendLead.leadName as Record<string, unknown> || {};
+  const leadName = backendLead.leadName || {};
   
   return {
     id: String(backendLead.id || ''),
     name: String(leadName.name || backendLead.name || ''),
     email: String(leadName.email || backendLead.email || ''),
     phone: String(leadName.phone || backendLead.phone || ''),
-    source: String(backendLead.source || 'Web'),
-    status: String(backendLead.status || 'New'),
+    source: (backendLead.source as Lead['source']) || 'Web',
+    status: (backendLead.status as Lead['status']) || 'New',
     assignedTo: backendLead.assignedTo || null,
-    assignmentType: String(backendLead.assignmentType || 'AI'),
+    assignmentType: (backendLead.assignmentType as Lead['assignmentType']) || 'AI',
     createdDate: String(backendLead.createdDate || new Date().toISOString()),
     lastContactDate: backendLead.lastContactDate ? String(backendLead.lastContactDate) : undefined,
     notes: backendLead.message ? String(backendLead.message) : undefined,
-    priority: String(backendLead.priority || 'Medium'),
+    priority: (backendLead.priority as Lead['priority']) || 'Medium',
     expectedRevenue: Number(backendLead.expectedRevenue || 0),
-    // Add property information if available
-    propertyName: backendLead.propertyName ? String(backendLead.propertyName) : undefined,
-    propertyLocation: backendLead.propertyLocation ? String(backendLead.propertyLocation) : undefined,
   };
 }
 
 // Transform individual booking object
-function transformBookingData(backendBooking: Record<string, unknown>): Booking {
-  const user = (backendBooking.user as Record<string, unknown>) || {};
-  const property = (backendBooking.property as Record<string, unknown>) || {};
+function transformBookingData(backendBooking: BackendBookingData): Booking {
+  const user = backendBooking.user || {};
+  const property = backendBooking.property || {};
 
   // Helper to coerce dates safely
   const safeDateString = (val: unknown): string => {
@@ -298,11 +289,11 @@ async function apiCall<T>(
       message,
       pagination,
     };
-  } catch (error: any) {
+  } catch (error: unknown) {
     return {
       data: undefined as T, // Use undefined instead of null
       success: false,
-      message: error?.message || `Failed to fetch ${endpoint}`,
+      message: (error as Error)?.message || `Failed to fetch ${endpoint}`,
     };
   }
 }
@@ -310,30 +301,53 @@ async function apiCall<T>(
 // -----------------------------
 // Small util
 // -----------------------------
-const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+// const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
 // -----------------------------
 // Authentication API
 // -----------------------------
 export const authApi = {
   login: async (email: string, password: string): Promise<ApiResponse<{ user: User; token: string }>> => {
-    const response = await apiCall<{ user: User; token: string }>('/user/login', {
-      method: 'POST',
-      body: JSON.stringify({ email, password }),
-    });
-
-    if (response.success && response.data && (response.data as any).token) {
+    // Always use local authentication - no backend calls
+    console.log('🔧 Using local authentication (no backend calls)');
+    
+    // Accept demo credentials
+    if (email === 'admin@tripongostays.com' && password === 'admin123') {
+      const mockUser: User = {
+        id: '1',
+        name: 'Admin User',
+        email: 'admin@tripongostays.com',
+        phone: '+1234567890',
+        role: 'admin',
+        joinedDate: new Date().toISOString(),
+        avatar: '',
+        isActive: true,
+      };
+      
+      const mockToken = 'mock-jwt-token-' + Date.now();
+      
+      // Store in localStorage
       try {
         if (typeof window !== 'undefined' && window.localStorage) {
-          window.localStorage.setItem('authToken', (response.data as any).token);
-          window.localStorage.setItem('user', JSON.stringify((response.data as any).user));
+          window.localStorage.setItem('authToken', mockToken);
+          window.localStorage.setItem('user', JSON.stringify(mockUser));
         }
       } catch {
-        // ignore localStorage set errors in restricted environments
+        // ignore localStorage errors
       }
+      
+      return {
+        data: { user: mockUser, token: mockToken },
+        success: true,
+        message: 'Local authentication successful',
+      };
+    } else {
+      return {
+        data: null as any,
+        success: false,
+        message: 'Invalid credentials',
+      };
     }
-
-    return response;
   },
 
   logout: async (): Promise<ApiResponse<null>> => {
@@ -345,11 +359,35 @@ export const authApi = {
     } catch {
       // ignore
     }
-    return apiCall<null>('/user/logout', { method: 'POST' });
+    return {
+      data: null,
+      success: true,
+      message: 'Logged out successfully',
+    };
   },
 
   getProfile: async (): Promise<ApiResponse<User>> => {
-    return apiCall<User>('/user/getuserbyid');
+    try {
+      if (typeof window !== 'undefined' && window.localStorage) {
+        const userStr = window.localStorage.getItem('user');
+        if (userStr) {
+          const user = JSON.parse(userStr);
+          return {
+            data: user,
+            success: true,
+            message: 'Profile retrieved successfully',
+          };
+        }
+      }
+    } catch {
+      // ignore
+    }
+    
+    return {
+      data: null as any,
+      success: false,
+      message: 'Profile not found',
+    };
   },
 };
 
@@ -374,19 +412,19 @@ export const dashboardApi = {
       const leadsRaw = leadsResponse.data || [];
       const leads = Array.isArray(leadsRaw)
         ? leadsRaw
-        : (Array.isArray((leadsRaw as any).leads) ? (leadsRaw as any).leads : []);
+        : (Array.isArray((leadsRaw as Record<string, unknown>).leads) ? (leadsRaw as Record<string, unknown>).leads : []);
 
       // Calculate real stats
       const totalBookings = bookings.length;
       const totalProperties = properties.length;
-      const totalLeads = leads.length;
+      const totalLeads = Array.isArray(leads) ? leads.length : 0;
 
       // Calculate total revenue from confirmed bookings
-      const confirmedBookings = bookings.filter((booking: any) =>
+      const confirmedBookings = bookings.filter((booking: Booking) =>
         String(booking.status).toLowerCase() === 'confirmed' || String(booking.status).toLowerCase() === 'completed'
       );
-      const revenue = confirmedBookings.reduce((sum: number, booking: any) => {
-        const amount = Number(booking.totalAmount || booking.amount || 0);
+      const revenue = confirmedBookings.reduce((sum: number, booking: Booking) => {
+        const amount = Number(booking.totalAmount || 0);
         return sum + amount;
       }, 0);
 
@@ -412,7 +450,7 @@ export const dashboardApi = {
         success: true,
         message: 'Dashboard stats calculated successfully',
       };
-    } catch (error: any) {
+    } catch (error: unknown) {
       return {
         data: {
           totalBookings: 0,
@@ -425,7 +463,7 @@ export const dashboardApi = {
           propertiesGrowth: 0,
         } as DashboardStats,
         success: false,
-        message: `Failed to calculate dashboard stats: ${error?.message || 'unknown error'}`,
+        message: `Failed to calculate dashboard stats: ${(error as Error)?.message || 'unknown error'}`,
       };
     }
   },
@@ -446,7 +484,7 @@ export const dashboardApi = {
         success: true,
         message: 'Lead conversion data loaded',
       };
-    } catch (error: any) {
+    } catch (error: unknown) {
       return {
         data: [],
         success: false,
@@ -471,7 +509,7 @@ export const dashboardApi = {
         success: true,
         message: 'City demand data loaded',
       };
-    } catch (error: any) {
+    } catch (error: unknown) {
       return {
         data: [],
         success: false,
@@ -541,19 +579,19 @@ export const leadsApi = {
     }
 
     // Fetch and normalize the backend shape { leads: [], pagination, ... } → array
-    const resp = await apiCall<any>(`/enquiry/leads?${params.toString()}`);
+    const resp = await apiCall<BackendLeadData[] | { leads: BackendLeadData[]; pagination?: unknown }>(`/enquiry/leads?${params.toString()}`);
 
     const leadsArray = Array.isArray(resp.data)
       ? resp.data
       : (Array.isArray(resp.data?.leads) ? resp.data.leads : []);
 
-    const pagination = resp.data?.pagination || resp.pagination;
+    const pagination = (resp.data && !Array.isArray(resp.data) ? resp.data.pagination : undefined) || resp.pagination;
 
     return {
       data: leadsArray as Lead[],
       success: resp.success,
       message: resp.message,
-      pagination,
+      pagination: pagination as ApiResponse<Lead[]>['pagination'],
     };
   },
 };
@@ -625,11 +663,11 @@ export const callHistoryApi = {
           totalPages: Math.ceil(filteredCalls.length / limit),
         },
       };
-    } catch (error: any) {
+    } catch (error: unknown) {
       return {
         data: [],
         success: false,
-        message: error?.message || 'Failed to fetch call history',
+        message: (error as Error)?.message || 'Failed to fetch call history',
       };
     }
   },
@@ -699,30 +737,30 @@ export const callHistoryApi = {
         success: true,
         message: 'Call history exported successfully',
       };
-    } catch (error: any) {
+    } catch (error: unknown) {
       return {
         data: '',
         success: false,
-        message: error?.message || 'Failed to export call history',
+        message: (error as Error)?.message || 'Failed to export call history',
       };
     }
   },
 };
 
 // Helper function to transform call analysis response to CallRecord format
-function transformCallAnalysisToCallRecords(apiResponse: any): CallRecord[] {
+function transformCallAnalysisToCallRecords(apiResponse: CallAnalysisResponse): CallRecord[] {
   
   // Only use primary_collection_analyses array
   const primaryAnalyses = apiResponse.primary_collection_analyses || [];
   
-  const transformedRecords = primaryAnalyses.map((call: any, index: number) => {
+  const transformedRecords = primaryAnalyses.map((call, index: number) => {
     
     // Extract data from the API response structure
     const statisticalDetails = call.Statistical_Details || {};
     const otherDetails = statisticalDetails.other_details || {};
     const metadata = otherDetails.metadata || {};
     const phoneCall = metadata.metadata?.phone_call || {};
-    const supportQuality = call.Other_Details_LLM?.support_quality || {};
+    // const supportQuality = call.Other_Details_LLM?.support_quality || {};
     const resultAction = call.Other_Details_LLM?.result_action || {};
     const dynamicVariables = metadata.conversation_initiation_client_data?.dynamic_variables || {};
     
@@ -733,7 +771,7 @@ function transformCallAnalysisToCallRecords(apiResponse: any): CallRecord[] {
     if (systemTimeUtc) {
       try {
         // Parse the ISO date string "2025-08-14T10:46:16.387212+00:00"
-        parsedDate = new Date(systemTimeUtc).toISOString();
+        parsedDate = new Date(String(systemTimeUtc)).toISOString();
       } catch (error) {
         console.warn('Failed to parse date:', systemTimeUtc, error);
       }
@@ -744,7 +782,7 @@ function transformCallAnalysisToCallRecords(apiResponse: any): CallRecord[] {
     const callType = direction === 'inbound' ? 'Incoming' : 'Outgoing';
     
     // Determine status from call_status
-    const callStatus = statisticalDetails.call_status || 'success';
+    const callStatus = otherDetails.call_status || 'success';
     let status: CallRecord['status'];
     switch (callStatus) {
       case 'success':
@@ -760,16 +798,16 @@ function transformCallAnalysisToCallRecords(apiResponse: any): CallRecord[] {
         status = 'Connected';
     }
     
-    // Get result from action_required array - join multiple actions with comma if needed
-    const actionRequired = resultAction.action_required || [];
-    const result = actionRequired.length > 0 ? actionRequired.join(', ') : 'No Action';
+    // Get result from action_required - handle both string and array cases
+    const actionRequired = resultAction.action_required || 'No Action';
+    const result = Array.isArray(actionRequired) ? actionRequired.join(', ') : String(actionRequired);
     
     // Get duration in seconds from dynamic_variables
-    const durationSecs = dynamicVariables.system__call_duration_secs || metadata.metadata?.call_duration_secs || 0;
+    const durationSecs = dynamicVariables.system__call_duration_secs || phoneCall.call_duration_secs || 0;
     
     // Get user name and phone from dynamic_variables
-    const userName = dynamicVariables.name || 'Unknown';
-    const phoneNumber = dynamicVariables.number || phoneCall.external_number || '';
+    const userName = String(dynamicVariables.name || 'Unknown');
+    const phoneNumber = String(dynamicVariables.number || phoneCall.external_number || '');
     
     // Get notes from summary
     const notes = call.Other_Details_LLM?.summary || '';
@@ -780,11 +818,11 @@ function transformCallAnalysisToCallRecords(apiResponse: any): CallRecord[] {
       userName: userName,
       type: callType as CallRecord['type'],
       status: status,
-      duration: durationSecs,
-      result: result,
+      duration: Number(durationSecs),
+      result: String(result),
       date: parsedDate,
       phoneNumber: phoneNumber,
-      notes: notes,
+      notes: String(notes),
     };
     
     return transformedRecord;
@@ -918,7 +956,7 @@ export const propertiesApi = {
       }
       
       return response;
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error fetching properties:', error);
       return {
         data: [],
@@ -1139,11 +1177,11 @@ export const profileApi = {
         success: true,
         message: 'Profile retrieved successfully',
       };
-    } catch (error: any) {
+    } catch (error: unknown) {
       return {
         data: {} as UserProfile,
         success: false,
-        message: error?.message || 'Failed to fetch profile',
+        message: (error as Error)?.message || 'Failed to fetch profile',
       };
     }
   },
@@ -1230,11 +1268,11 @@ export const profileApi = {
           totalPages: Math.ceil(profiles.length / limit),
         },
       };
-    } catch (error: any) {
+    } catch (error: unknown) {
       return {
         data: [],
         success: false,
-        message: error?.message || 'Failed to search profiles',
+        message: (error as Error)?.message || 'Failed to search profiles',
       };
     }
   },

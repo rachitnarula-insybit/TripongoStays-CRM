@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useRouter } from 'next/router';
+import Image from 'next/image';
 import { 
   Search, 
   Filter, 
@@ -9,7 +10,6 @@ import {
   Phone, 
   MessageCircle,
   Download,
-  Plus,
   Grid3X3,
   List,
   SortAsc,
@@ -52,10 +52,10 @@ const ProfilesPage: React.FC = () => {
   } = useQuery({
     queryKey: ['profiles', currentPage, limit, searchTerm, filters],
     queryFn: () => profileApi.searchProfiles(searchTerm, currentPage, limit, filters),
-    keepPreviousData: true,
+    placeholderData: (previousData) => previousData,
   });
 
-  const profiles = profilesResponse?.data || [];
+  const profiles = useMemo(() => profilesResponse?.data || [], [profilesResponse?.data]);
   const pagination = profilesResponse?.pagination;
 
   const debouncedSearch = debounce((value: string) => {
@@ -144,7 +144,7 @@ const ProfilesPage: React.FC = () => {
     if (!sortKey) return profiles;
     
     return [...profiles].sort((a, b) => {
-      let aValue: any, bValue: any;
+      let aValue: string | number, bValue: string | number;
       
       switch (sortKey) {
         case 'name':
@@ -174,8 +174,8 @@ const ProfilesPage: React.FC = () => {
       }
       
       return sortDirection === 'asc' 
-        ? (aValue || 0) - (bValue || 0)
-        : (bValue || 0) - (aValue || 0);
+        ? (Number(aValue) || 0) - (Number(bValue) || 0)
+        : (Number(bValue) || 0) - (Number(aValue) || 0);
     });
   }, [profiles, sortKey, sortDirection]);
 
@@ -187,15 +187,15 @@ const ProfilesPage: React.FC = () => {
       render: (value, profile) => (
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white text-sm font-medium">
-            {profile.avatar ? (
-              <img src={profile.avatar} alt={profile.name} className="w-full h-full rounded-full object-cover" />
+            {profile?.avatar ? (
+              <Image src={profile.avatar} alt={profile.name} width={40} height={40} className="w-full h-full rounded-full object-cover" />
             ) : (
-              getInitials(profile.name)
+              getInitials(profile?.name || '')
             )}
           </div>
           <div>
-            <div className="font-medium text-gray-900">{profile.name}</div>
-            <div className="text-sm text-gray-500">{profile.email || profile.phone}</div>
+            <div className="font-medium text-gray-900">{profile?.name}</div>
+            <div className="text-sm text-gray-500">{profile?.email || profile?.phone}</div>
           </div>
         </div>
       ),
@@ -230,6 +230,7 @@ const ProfilesPage: React.FC = () => {
       key: 'engagement',
       label: 'Engagement',
       render: (_, profile) => {
+        if (!profile) return null;
         const engagement = getEngagementLevel(profile);
         return (
           <Badge className={engagement.color} size="sm">
@@ -244,9 +245,9 @@ const ProfilesPage: React.FC = () => {
       sortable: true,
       render: (_, profile) => (
         <div className="text-center">
-          <div className="font-medium">{profile.engagementSummary.totalCalls}</div>
+          <div className="font-medium">{profile?.engagementSummary?.totalCalls}</div>
           <div className="text-xs text-gray-500">
-            {profile.engagementSummary.callsConnected} connected
+            {profile?.engagementSummary?.callsConnected} connected
           </div>
         </div>
       ),
@@ -258,10 +259,10 @@ const ProfilesPage: React.FC = () => {
       render: (_, profile) => (
         <div className="text-right">
           <div className="font-medium text-green-600">
-            {formatCurrency(profile.engagementSummary.totalRevenue)}
+            {formatCurrency(profile?.engagementSummary?.totalRevenue || 0)}
           </div>
           <div className="text-xs text-gray-500">
-            {profile.engagementSummary.totalBookings} bookings
+            {profile?.engagementSummary?.totalBookings} bookings
           </div>
         </div>
       ),
@@ -279,18 +280,18 @@ const ProfilesPage: React.FC = () => {
         <div className="flex items-center gap-2">
           <Button
             size="sm"
-            variant="outline"
-            onClick={() => handleViewProfile(profile)}
+            variant="tertiary"
+            onClick={() => profile && handleViewProfile(profile)}
             leftIcon={<Eye className="h-3 w-3" />}
           >
             View
           </Button>
-          {profile.phone && (
+          {profile?.phone && (
             <>
               <Button
                 size="sm"
-                variant="outline"
-                onClick={() => handleCall(profile)}
+                variant="tertiary"
+                onClick={() => profile && handleCall(profile)}
                 leftIcon={<Phone className="h-3 w-3" />}
                 className="text-blue-600 border-blue-200 hover:bg-blue-50"
               >
@@ -298,8 +299,8 @@ const ProfilesPage: React.FC = () => {
               </Button>
               <Button
                 size="sm"
-                variant="outline"
-                onClick={() => handleWhatsApp(profile)}
+                variant="tertiary"
+                onClick={() => profile && handleWhatsApp(profile)}
                 leftIcon={<MessageCircle className="h-3 w-3" />}
                 className="text-green-600 border-green-200 hover:bg-green-50"
               >
@@ -317,7 +318,7 @@ const ProfilesPage: React.FC = () => {
       <div className="flex h-96 items-center justify-center">
         <div className="text-center">
           <p className="text-red-600">Failed to load profiles</p>
-          <Button variant="outline" onClick={() => refetch()} className="mt-2">
+          <Button variant="tertiary" onClick={() => refetch()} className="mt-2">
             Try Again
           </Button>
         </div>
@@ -338,7 +339,7 @@ const ProfilesPage: React.FC = () => {
         
         <div className="flex items-center gap-2">
           <Button
-            variant="outline"
+            variant="tertiary"
             onClick={() => setShowFilters(!showFilters)}
             leftIcon={<Filter className="h-4 w-4" />}
             className={hasActiveFilters ? 'border-blue-500 text-blue-600' : ''}
@@ -352,7 +353,7 @@ const ProfilesPage: React.FC = () => {
           </Button>
           
           <Button
-            variant="outline"
+            variant="tertiary"
             leftIcon={<Download className="h-4 w-4" />}
           >
             Export
@@ -375,7 +376,7 @@ const ProfilesPage: React.FC = () => {
           <div className="flex items-center gap-1 bg-white rounded-lg border border-gray-200 p-1">
             <Button
               size="sm"
-              variant={sortDirection === 'asc' ? 'default' : 'outline'}
+              variant={sortDirection === 'asc' ? 'primary' : 'secondary'}
               onClick={() => handleSort(sortKey, 'asc')}
               leftIcon={<SortAsc className="h-3 w-3" />}
               className="text-xs"
@@ -384,7 +385,7 @@ const ProfilesPage: React.FC = () => {
             </Button>
             <Button
               size="sm"
-              variant={sortDirection === 'desc' ? 'default' : 'outline'}
+              variant={sortDirection === 'desc' ? 'primary' : 'secondary'}
               onClick={() => handleSort(sortKey, 'desc')}
               leftIcon={<SortDesc className="h-3 w-3" />}
               className="text-xs"
@@ -397,7 +398,7 @@ const ProfilesPage: React.FC = () => {
           <div className="flex items-center bg-white rounded-lg border border-gray-200 p-1">
             <Button
               size="sm"
-              variant={viewMode === 'grid' ? 'default' : 'outline'}
+              variant={viewMode === 'grid' ? 'primary' : 'secondary'}
               onClick={() => setViewMode('grid')}
               leftIcon={<Grid3X3 className="h-3 w-3" />}
               className="text-xs"
@@ -406,7 +407,7 @@ const ProfilesPage: React.FC = () => {
             </Button>
             <Button
               size="sm"
-              variant={viewMode === 'list' ? 'default' : 'outline'}
+              variant={viewMode === 'list' ? 'primary' : 'secondary'}
               onClick={() => setViewMode('list')}
               leftIcon={<List className="h-3 w-3" />}
               className="text-xs"
@@ -425,7 +426,7 @@ const ProfilesPage: React.FC = () => {
               <h3 className="text-lg font-medium text-gray-900">Filters</h3>
               {hasActiveFilters && (
                 <Button
-                  variant="outline"
+                  variant="tertiary"
                   size="sm"
                   onClick={handleClearFilters}
                 >
@@ -479,7 +480,7 @@ const ProfilesPage: React.FC = () => {
                     <label key={level} className="flex items-center space-x-2">
                       <input
                         type="checkbox"
-                        checked={filters.engagementLevel?.includes(level.toLowerCase() as any) || false}
+                        checked={filters.engagementLevel?.includes(level.toLowerCase() as 'low' | 'medium' | 'high') || false}
                         onChange={() => handleFilterChange('engagementLevel', level.toLowerCase())}
                         className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                       />
@@ -501,40 +502,40 @@ const ProfilesPage: React.FC = () => {
             const engagement = getEngagementLevel(profile);
             
             return (
-              <Card key={profile.id} className="hover:shadow-lg transition-shadow duration-200 cursor-pointer" onClick={() => handleViewProfile(profile)}>
+              <Card key={profile.id} className="hover:shadow-lg transition-shadow duration-200 cursor-pointer" onClick={() => profile && handleViewProfile(profile)}>
                 <CardContent className="p-6">
                   {/* Avatar & Basic Info */}
                   <div className="flex items-center gap-3 mb-4">
                     <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white font-medium">
-                      {profile.avatar ? (
-                        <img src={profile.avatar} alt={profile.name} className="w-full h-full rounded-full object-cover" />
+                      {profile?.avatar ? (
+                        <Image src={profile.avatar} alt={profile.name} width={48} height={48} className='w-full h-full rounded-full object-cover' />
                       ) : (
-                        getInitials(profile.name)
+                        getInitials(profile?.name || '')
                       )}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <div className="font-medium text-gray-900 truncate">{profile.name}</div>
-                      <div className="text-sm text-gray-500 truncate">{profile.email || profile.phone}</div>
+                      <div className="font-medium text-gray-900 truncate">{profile?.name}</div>
+                      <div className="text-sm text-gray-500 truncate">{profile?.email || profile?.phone}</div>
                     </div>
                   </div>
 
                   {/* Badges */}
                   <div className="flex flex-wrap gap-2 mb-4">
-                    <Badge variant="info" size="sm">{profile.source}</Badge>
-                    <Badge className={getStatusColor(profile.status)} size="sm">{profile.status}</Badge>
+                    <Badge variant="info" size="sm">{profile?.source}</Badge>
+                    <Badge className={getStatusColor(profile?.status || 'Active')} size="sm">{profile?.status}</Badge>
                     <Badge className={engagement.color} size="sm">{engagement.level}</Badge>
                   </div>
 
                   {/* Stats */}
                   <div className="grid grid-cols-2 gap-4 mb-4 text-center">
                     <div>
-                      <div className="text-lg font-bold text-gray-900">{profile.engagementSummary.totalCalls}</div>
+                      <div className="text-lg font-bold text-gray-900">{profile?.engagementSummary?.totalCalls}</div>
                       <div className="text-xs text-gray-500">Calls</div>
                     </div>
                     <div>
                       <div className="text-lg font-bold text-green-600">
-                        {profile.engagementSummary.totalRevenue > 0 
-                          ? `₹${Math.round(profile.engagementSummary.totalRevenue / 1000)}K`
+                        {(profile?.engagementSummary?.totalRevenue || 0) > 0 
+                          ? `₹${Math.round((profile?.engagementSummary?.totalRevenue || 0) / 1000)}K`
                           : '₹0'
                         }
                       </div>
@@ -546,27 +547,27 @@ const ProfilesPage: React.FC = () => {
                   <div className="flex gap-2">
                     <Button
                       size="sm"
-                      variant="outline"
+                      variant="tertiary"
                       onClick={(e) => {
                         e.stopPropagation();
-                        handleCall(profile);
+                        profile && handleCall(profile);
                       }}
                       leftIcon={<Phone className="h-3 w-3" />}
                       className="flex-1 text-blue-600 border-blue-200 hover:bg-blue-50"
-                      disabled={!profile.phone}
+                      disabled={!profile?.phone}
                     >
                       Call
                     </Button>
                     <Button
                       size="sm"
-                      variant="outline"
+                      variant="tertiary"
                       onClick={(e) => {
                         e.stopPropagation();
-                        handleWhatsApp(profile);
+                        profile && handleWhatsApp(profile);
                       }}
                       leftIcon={<MessageCircle className="h-3 w-3" />}
                       className="flex-1 text-green-600 border-green-200 hover:bg-green-50"
-                      disabled={!profile.phone}
+                      disabled={!profile?.phone}
                     >
                       Chat
                     </Button>

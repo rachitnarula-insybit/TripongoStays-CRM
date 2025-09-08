@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import {
   Phone,
-  PhoneCall,
   Calendar,
   MessageCircle,
   Mail,
@@ -9,14 +8,13 @@ import {
   CheckCircle,
   AlertCircle,
   Clock,
-  Filter,
   ChevronDown
 } from 'lucide-react';
 import { UserProfile, ProfileActivity } from '@/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import Badge from '@/components/ui/Badge';
 import Button from '@/components/ui/Button';
-import { formatDate, formatDateTime, formatDuration } from '@/utils';
+import { formatDateTime, formatDuration } from '@/utils';
 
 interface ActivityTimelineProps {
   profile: UserProfile;
@@ -94,12 +92,12 @@ const ActivityTimeline: React.FC<ActivityTimelineProps> = ({ profile }) => {
             {filterOptions.map((option) => (
               <Button
                 key={option.value}
-                variant={filter === option.value ? 'default' : 'outline'}
+                variant={filter === option.value ? 'primary' : 'tertiary'}
                 size="sm"
-                onClick={() => setFilter(option.value as any)}
+                onClick={() => setFilter(option.value as 'all' | 'call' | 'booking' | 'note')}
                 className={`text-xs ${
-                  filter === option.value 
-                    ? 'bg-blue-600 text-white border-blue-600' 
+                  filter === option.value
+                    ? 'bg-blue-600 text-white border-blue-600'
                     : 'text-gray-600 hover:text-gray-900'
                 }`}
               >
@@ -136,10 +134,10 @@ const ActivityTimeline: React.FC<ActivityTimelineProps> = ({ profile }) => {
               
               {/* Activities */}
               <div className="space-y-6">
-                {displayedActivities.map((activity, index) => {
+                {displayedActivities.map((activity) => {
                   const Icon = getActivityIcon(activity.type);
                   const color = getActivityColor(activity);
-                  const isLast = index === displayedActivities.length - 1;
+                  // const isLast = index === displayedActivities.length - 1;
                   
                   return (
                     <div key={activity.id} className="relative flex items-start gap-4">
@@ -176,7 +174,7 @@ const ActivityTimeline: React.FC<ActivityTimelineProps> = ({ profile }) => {
                           {/* Metadata */}
                           {activity.metadata && (
                             <div className="mt-3 pt-3 border-t border-gray-100">
-                              {activity.type === 'call' && activity.metadata.callRecord && (
+                              {activity.type === 'call' && activity.metadata?.callRecord && (
                                 <div className="flex flex-wrap items-center gap-4 text-xs text-gray-500">
                                   <span className="flex items-center gap-1">
                                     <Clock className="h-3 w-3" />
@@ -189,7 +187,7 @@ const ActivityTimeline: React.FC<ActivityTimelineProps> = ({ profile }) => {
                                 </div>
                               )}
                               
-                              {activity.type === 'booking' && activity.metadata.booking && (
+                              {activity.type === 'booking' && activity.metadata?.booking && (
                                 <div className="flex flex-wrap items-center gap-4 text-xs text-gray-500">
                                   <span className="flex items-center gap-1">
                                     <Calendar className="h-3 w-3" />
@@ -216,7 +214,7 @@ const ActivityTimeline: React.FC<ActivityTimelineProps> = ({ profile }) => {
             {filteredActivities.length > 10 && !showAll && (
               <div className="text-center pt-4">
                 <Button
-                  variant="outline"
+                  variant="tertiary"
                   onClick={() => setShowAll(true)}
                   leftIcon={<ChevronDown className="h-4 w-4" />}
                   className="text-gray-600 hover:text-gray-900"
@@ -230,7 +228,7 @@ const ActivityTimeline: React.FC<ActivityTimelineProps> = ({ profile }) => {
             {showAll && filteredActivities.length > 10 && (
               <div className="text-center pt-4">
                 <Button
-                  variant="outline"
+                  variant="tertiary"
                   onClick={() => setShowAll(false)}
                   className="text-gray-600 hover:text-gray-900"
                 >

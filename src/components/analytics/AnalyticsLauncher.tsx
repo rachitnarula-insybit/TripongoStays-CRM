@@ -3,7 +3,7 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useRouter } from 'next/router';
-import { BarChart3, Brain, TrendingUp, Zap, Eye, Sparkles } from 'lucide-react';
+import { BarChart3, Brain, Sparkles } from 'lucide-react';
 import { cn } from '@/utils';
 import { useReducedMotion, hapticFeedback } from '@/utils/motion';
 import Button from '@/components/ui/Button';
