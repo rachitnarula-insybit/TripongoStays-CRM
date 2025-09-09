@@ -62,7 +62,7 @@ const navigationItems = [
     description: 'Communication logs',
   },
   {
-    name: 'Bookings',
+    name: 'Transactions',
     href: '/bookings',
     icon: Calendar,
     description: 'Reservations & stays',

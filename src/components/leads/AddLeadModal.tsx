@@ -117,8 +117,8 @@ const AddLeadModal: React.FC<AddLeadModalProps> = ({
               <User className="h-6 w-6 text-blue-600" />
             </div>
             <div>
-              <h2 className="text-xl font-semibold text-gray-900">Add New Lead</h2>
-              <p className="text-sm text-gray-600">Create a new lead and start tracking their journey</p>
+              <h2 className="text-2xl font-semibold text-gray-900">Add New Lead</h2>
+              <p className="text-base text-gray-600">Create a new lead and start tracking their journey</p>
             </div>
           </div>
           <Button
@@ -135,14 +135,14 @@ const AddLeadModal: React.FC<AddLeadModalProps> = ({
         <form onSubmit={handleSubmit} className="p-6 space-y-6">
           {/* Personal Information */}
           <div className="space-y-4">
-            <h3 className="text-lg font-medium text-gray-900 flex items-center">
-              <User className="h-5 w-5 mr-2 text-blue-500" />
+            <h3 className="text-xl font-medium text-gray-900 flex items-center">
+              <User className="h-6 w-6 mr-2 text-blue-500" />
               Personal Information
             </h3>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-base font-medium text-gray-700 mb-1">
                   Full Name *
                 </label>
                 <Input
@@ -155,7 +155,7 @@ const AddLeadModal: React.FC<AddLeadModalProps> = ({
               </div>
               
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-base font-medium text-gray-700 mb-1">
                   Phone Number *
                 </label>
                 <Input
@@ -169,7 +169,7 @@ const AddLeadModal: React.FC<AddLeadModalProps> = ({
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-base font-medium text-gray-700 mb-1">
                 Email Address *
               </label>
               <Input
@@ -185,14 +185,14 @@ const AddLeadModal: React.FC<AddLeadModalProps> = ({
 
           {/* Lead Details */}
           <div className="space-y-4">
-            <h3 className="text-lg font-medium text-gray-900 flex items-center">
-              <Globe className="h-5 w-5 mr-2 text-green-500" />
+            <h3 className="text-xl font-medium text-gray-900 flex items-center">
+              <Globe className="h-6 w-6 mr-2 text-green-500" />
               Lead Details
             </h3>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-base font-medium text-gray-700 mb-2">
                   Source
                 </label>
                 <div className="grid grid-cols-2 gap-2">
@@ -201,7 +201,7 @@ const AddLeadModal: React.FC<AddLeadModalProps> = ({
                       key={option.value}
                       type="button"
                       onClick={() => handleInputChange('source', option.value)}
-                      className={`p-3 rounded-lg border-2 transition-all text-sm font-medium ${
+                      className={`p-3 rounded-lg border-2 transition-all text-base font-medium ${
                         formData.source === option.value
                           ? option.color + ' border-current'
                           : 'border-gray-200 text-gray-600 hover:border-gray-300 hover:bg-gray-50'
@@ -214,7 +214,7 @@ const AddLeadModal: React.FC<AddLeadModalProps> = ({
               </div>
               
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-base font-medium text-gray-700 mb-2">
                   Priority
                 </label>
                 <div className="space-y-2">
@@ -223,7 +223,7 @@ const AddLeadModal: React.FC<AddLeadModalProps> = ({
                       key={option.value}
                       type="button"
                       onClick={() => handleInputChange('priority', option.value)}
-                      className={`w-full p-2 rounded-lg border-2 transition-all text-sm font-medium flex items-center justify-between ${
+                      className={`w-full p-2 rounded-lg border-2 transition-all text-base font-medium flex items-center justify-between ${
                         formData.priority === option.value
                           ? option.color + ' border-current'
                           : 'border-gray-200 text-gray-600 hover:border-gray-300 hover:bg-gray-50'
@@ -242,8 +242,8 @@ const AddLeadModal: React.FC<AddLeadModalProps> = ({
 
           {/* Notes */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1 flex items-center">
-              <FileText className="h-4 w-4 mr-2 text-purple-500" />
+            <label className="block text-base font-medium text-gray-700 mb-1 flex items-center">
+              <FileText className="h-5 w-5 mr-2 text-purple-500" />
               Notes (Optional)
             </label>
             <textarea
@@ -257,7 +257,7 @@ const AddLeadModal: React.FC<AddLeadModalProps> = ({
 
           {/* Form Actions */}
           <div className="flex items-center justify-between pt-4 border-t border-gray-200">
-            <div className="text-sm text-gray-500">
+            <div className="text-base text-gray-500">
               * Required fields
             </div>
             <div className="flex space-x-3">
@@ -289,8 +289,8 @@ const AddLeadModal: React.FC<AddLeadModalProps> = ({
                 <User className="h-4 w-4 text-green-600" />
               </div>
               <div className="flex-1 min-w-0">
-                <h4 className="text-sm font-medium text-green-800">Preview</h4>
-                <div className="mt-1 text-sm text-green-700">
+                <h4 className="text-base font-medium text-green-800">Preview</h4>
+                <div className="mt-1 text-base text-green-700">
                   <div><strong>{formData.name}</strong></div>
                   <div>{formData.email} • {formData.phone}</div>
                   <div className="flex items-center space-x-2 mt-1">

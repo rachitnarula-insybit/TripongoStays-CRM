@@ -434,8 +434,8 @@ const LeadsPage: React.FC = () => {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-neutral-black">Leads</h1>
-          <p className="text-neutral-gray">Manage and track your sales leads</p>
+          <h1 className="text-4xl font-bold text-neutral-black">Leads</h1>
+          <p className="text-lg text-neutral-gray">Manage and track your sales leads</p>
         </div>
         <div className="flex items-center space-x-2">
           <Input

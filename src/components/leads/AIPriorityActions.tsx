@@ -150,13 +150,13 @@ const AIPriorityActions: React.FC = () => {
                 <Brain className="h-4 w-4 text-white" />
               </div>
               <div>
-                <h2 className="text-lg font-bold text-white">AI Priority Actions</h2>
-                <p className="text-blue-100 text-xs">Smart recommendations for maximum conversion</p>
+                <h2 className="text-2xl font-bold text-white">AI Priority Actions</h2>
+                <p className="text-blue-100 text-sm">Smart recommendations for maximum conversion</p>
               </div>
             </div>
             <div className="flex items-center space-x-2">
               <div className="px-2 py-0.5 bg-white/20 rounded-full backdrop-blur-sm">
-                <span className="text-white text-xs font-medium">Live Updates</span>
+                <span className="text-white text-sm font-medium">Live Updates</span>
               </div>
               <div className="h-1.5 w-1.5 bg-green-400 rounded-full animate-pulse"></div>
             </div>
@@ -166,20 +166,20 @@ const AIPriorityActions: React.FC = () => {
         {/* Stats Row */}
         <div className="grid grid-cols-4 divide-x divide-gray-200 bg-white/60 backdrop-blur-sm">
           <div className="px-3 py-2 text-center">
-            <div className="text-lg font-bold text-blue-600">4</div>
-            <div className="text-xs text-gray-600">Priority Actions</div>
+            <div className="text-xl font-bold text-blue-600">4</div>
+            <div className="text-sm text-gray-600">Priority Actions</div>
           </div>
           <div className="px-3 py-2 text-center">
-            <div className="text-lg font-bold text-green-600">₹1.2L</div>
-            <div className="text-xs text-gray-600">Potential Revenue</div>
+            <div className="text-xl font-bold text-green-600">₹1.2L</div>
+            <div className="text-sm text-gray-600">Potential Revenue</div>
           </div>
           <div className="px-3 py-2 text-center">
-            <div className="text-lg font-bold text-orange-600">82%</div>
-            <div className="text-xs text-gray-600">Avg Confidence</div>
+            <div className="text-xl font-bold text-orange-600">82%</div>
+            <div className="text-sm text-gray-600">Avg Confidence</div>
           </div>
           <div className="px-3 py-2 text-center">
-            <div className="text-lg font-bold text-purple-600">2hrs</div>
-            <div className="text-xs text-gray-600">Response Time</div>
+            <div className="text-xl font-bold text-purple-600">2hrs</div>
+            <div className="text-sm text-gray-600">Response Time</div>
           </div>
         </div>
 
@@ -199,7 +199,7 @@ const AIPriorityActions: React.FC = () => {
                     <div className="flex items-center space-x-2 mb-1.5">
                       {getActionIcon(action.type)}
                       <div className="flex items-center space-x-2">
-                        <h3 className="text-sm font-semibold text-gray-900 group-hover:text-blue-600 transition-colors">
+                        <h3 className="text-base font-semibold text-gray-900 group-hover:text-blue-600 transition-colors">
                           {action.title}
                         </h3>
                         <Badge className={getPriorityColor(action.priority)} size="sm">
@@ -208,9 +208,9 @@ const AIPriorityActions: React.FC = () => {
                       </div>
                     </div>
                     
-                    <p className="text-gray-600 text-xs mb-2">{action.description}</p>
+                    <p className="text-gray-600 text-sm mb-2">{action.description}</p>
                     
-                    <div className="flex items-center space-x-3 text-xs text-gray-500">
+                    <div className="flex items-center space-x-3 text-sm text-gray-500">
                       <span className="font-medium text-gray-700">{action.leadName}</span>
                       {action.expectedRevenue && (
                         <span className="flex items-center">
@@ -227,8 +227,8 @@ const AIPriorityActions: React.FC = () => {
                   
                   <div className="flex flex-col items-end space-y-1.5 ml-3">
                     {/* AI Confidence */}
-                    <div className="flex items-center space-x-1 text-xs">
-                      <Brain className="h-2.5 w-2.5 text-purple-500" />
+                    <div className="flex items-center space-x-1 text-sm">
+                      <Brain className="h-3 w-3 text-purple-500" />
                       <span className="text-purple-600 font-medium">{action.confidence}%</span>
                     </div>
                     
@@ -264,7 +264,7 @@ const AIPriorityActions: React.FC = () => {
                 
                 {/* Progress Bar for Confidence */}
                 <div className="mt-2">
-                  <div className="flex items-center justify-between text-xs text-gray-500 mb-0.5">
+                  <div className="flex items-center justify-between text-sm text-gray-500 mb-0.5">
                     <span>AI Confidence</span>
                     <span>{action.confidence}%</span>
                   </div>
@@ -286,8 +286,8 @@ const AIPriorityActions: React.FC = () => {
         {/* Footer */}
         <div className="px-4 py-3 bg-gray-50 border-t border-gray-200">
           <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-2 text-xs text-gray-600">
-              <Zap className="h-3 w-3 text-yellow-500" />
+            <div className="flex items-center space-x-2 text-sm text-gray-600">
+              <Zap className="h-4 w-4 text-yellow-500" />
               <span>Powered by AI • Updated every 5 minutes</span>
             </div>
             <Button

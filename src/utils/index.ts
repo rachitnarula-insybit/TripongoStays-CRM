@@ -252,3 +252,26 @@ export function openWhatsApp(phoneNumber: string, message?: string): void {
 export function initiateCall(phoneNumber: string): void {
   window.open(`tel:${phoneNumber}`, '_self');
 }
+
+// Email helper
+export function sendEmail(emailAddress: string, subject?: string, body?: string): void {
+  const encodedSubject = subject ? encodeURIComponent(subject) : '';
+  const encodedBody = body ? encodeURIComponent(body) : '';
+  
+  let mailtoUrl = `mailto:${emailAddress}`;
+  const params = [];
+  
+  if (encodedSubject) {
+    params.push(`subject=${encodedSubject}`);
+  }
+  
+  if (encodedBody) {
+    params.push(`body=${encodedBody}`);
+  }
+  
+  if (params.length > 0) {
+    mailtoUrl += `?${params.join('&')}`;
+  }
+  
+  window.open(mailtoUrl, '_self');
+}

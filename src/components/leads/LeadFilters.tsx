@@ -85,7 +85,7 @@ const LeadFiltersComponent: React.FC<LeadFiltersProps> = ({
           <div className="p-1.5 bg-blue-100 rounded-lg">
             <Filter className="h-4 w-4 text-blue-600" />
           </div>
-          <span className="text-lg font-semibold">Smart Filters</span>
+          <span className="text-xl font-semibold">Smart Filters</span>
         </CardTitle>
         {hasActiveFilters && (
           <Button
@@ -102,7 +102,7 @@ const LeadFiltersComponent: React.FC<LeadFiltersProps> = ({
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {/* Source Filter */}
           <div>
-            <h4 className="text-sm font-medium text-neutral-black mb-3 flex items-center">
+            <h4 className="text-base font-medium text-neutral-black mb-3 flex items-center">
               <span>Lead Source</span>
             </h4>
             <div className="space-y-2">
@@ -117,7 +117,7 @@ const LeadFiltersComponent: React.FC<LeadFiltersProps> = ({
                     onChange={() => handleSourceChange(source.value)}
                     className="rounded border-gray-300 text-blue-600 focus:ring-2 focus:ring-blue-500"
                   />
-                  <span className="text-sm text-gray-700 font-medium">{source.label}</span>
+                  <span className="text-base text-gray-700 font-medium">{source.label}</span>
                 </label>
               ))}
             </div>
@@ -125,7 +125,7 @@ const LeadFiltersComponent: React.FC<LeadFiltersProps> = ({
 
           {/* Status Filter */}
           <div>
-            <h4 className="text-sm font-medium text-neutral-black mb-3 flex items-center">
+            <h4 className="text-base font-medium text-neutral-black mb-3 flex items-center">
               <span>Lead Status</span>
             </h4>
             <div className="space-y-2">
@@ -140,7 +140,7 @@ const LeadFiltersComponent: React.FC<LeadFiltersProps> = ({
                     onChange={() => handleStatusChange(status.value)}
                     className="rounded border-gray-300 text-blue-600 focus:ring-2 focus:ring-blue-500"
                   />
-                  <span className="text-sm text-gray-700 font-medium">{status.label}</span>
+                  <span className="text-base text-gray-700 font-medium">{status.label}</span>
                 </label>
               ))}
             </div>
@@ -148,7 +148,7 @@ const LeadFiltersComponent: React.FC<LeadFiltersProps> = ({
 
           {/* Assignment Filter */}
           <div>
-            <h4 className="text-sm font-medium text-neutral-black mb-3 flex items-center">
+            <h4 className="text-base font-medium text-neutral-black mb-3 flex items-center">
               <span>Agent Type</span>
             </h4>
             <div className="space-y-2">
@@ -163,7 +163,7 @@ const LeadFiltersComponent: React.FC<LeadFiltersProps> = ({
                     onChange={() => handleAssignmentChange(option.value)}
                     className="rounded border-gray-300 text-blue-600 focus:ring-2 focus:ring-blue-500"
                   />
-                  <span className="text-sm text-gray-700 font-medium">{option.label}</span>
+                  <span className="text-base text-gray-700 font-medium">{option.label}</span>
                 </label>
               ))}
             </div>

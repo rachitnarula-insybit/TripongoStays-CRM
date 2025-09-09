@@ -71,7 +71,7 @@ const Pagination: React.FC<PaginationProps> = ({
             return (
               <span
                 key={`dots-${index}`}
-                className="px-3 py-2 text-sm text-neutral-gray"
+                className="px-3 py-2 text-base text-neutral-gray"
               >
                 ...
               </span>

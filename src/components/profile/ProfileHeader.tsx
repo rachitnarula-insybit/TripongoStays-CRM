@@ -13,7 +13,7 @@ import {
 import { UserProfile } from '@/types';
 import Badge from '@/components/ui/Badge';
 import Button from '@/components/ui/Button';
-import { formatDate, formatCurrency, initiateCall, openWhatsApp } from '@/utils';
+import { formatDate, formatCurrency, initiateCall, openWhatsApp, sendEmail } from '@/utils';
 
 interface ProfileHeaderProps {
   profile: UserProfile;
@@ -60,6 +60,14 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({ profile, onEdit }) => {
     if (profile.phone) {
       const message = `Hi ${profile.name}, I'm reaching out from TripongoStays. How can I assist you today?`;
       openWhatsApp(profile.phone, message);
+    }
+  };
+
+  const handleEmail = () => {
+    if (profile.email) {
+      const subject = `Hello ${profile.name} - TripongoStays`;
+      const body = `Hi ${profile.name},\n\nI hope this email finds you well. I'm reaching out from TripongoStays to see how we can assist you with your accommodation needs.\n\nPlease let me know if you have any questions or if there's anything specific I can help you with.\n\nBest regards,\nTripongoStays Team`;
+      sendEmail(profile.email, subject, body);
     }
   };
 
@@ -171,6 +179,17 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({ profile, onEdit }) => {
                   size="sm"
                 >
                   Call
+                </Button>
+              )}
+              
+              {profile.email && (
+                <Button
+                  onClick={handleEmail}
+                  leftIcon={<Mail className="h-4 w-4" />}
+                  className="bg-blue-600 hover:bg-blue-700 text-white border-blue-600"
+                  size="sm"
+                >
+                  Email
                 </Button>
               )}
               
